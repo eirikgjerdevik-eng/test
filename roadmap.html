@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Roadmap</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/gh/gitbrent/PptxGenJS@3.12.0/dist/pptxgen.bundle.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #00003c;
+    --bg-surface: #0a0a4a;
+    --bg-surface-hover: #12125a;
+    --bg-elevated: #16166a;
+    --accent: #ea3323;
+    --accent-hover: #ff4433;
+    --green: #2ecc71;
+    --blue-muted: #4a6fa5;
+    --amber: #f0a030;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255,255,255,0.6);
+    --text-muted: rgba(255,255,255,0.35);
+    --border: rgba(255,255,255,0.08);
+    --border-light: rgba(255,255,255,0.12);
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+    --month-width: 200px;
+  }
+
+  body {
+    font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ---- Header ---- */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 12px 40px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg-primary);
+    z-index: 100;
+  }
+
+  /* ---- Controls ---- */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toggle-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+
+  .toggle-buttons {
+    display: flex;
+    background: var(--bg-surface);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .toggle-btn {
+    padding: 6px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .toggle-btn.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .toggle-btn:hover:not(.active) {
+    color: var(--text-primary);
+    background: var(--bg-surface-hover);
+  }
+
+  .export-btn {
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .export-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-hover);
+    border-color: var(--border-light);
+  }
+
+  .legend {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ---- Timeline Container ---- */
+  .timeline-container {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 58px);
+    position: relative;
+  }
+
+  .timeline-container::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+
+  .timeline-container::-webkit-scrollbar-track {
+    background: var(--bg-surface);
+  }
+
+  .timeline-container::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.12);
+    border-radius: 3px;
+  }
+
+  .timeline-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.2);
+  }
+
+  /* ---- Lane Labels (left sidebar) ---- */
+  .lane-labels {
+    flex-shrink: 0;
+    width: 200px;
+    position: sticky;
+    left: 0;
+    z-index: 50;
+    background: #1b1b83;
+    border-right: 1px solid var(--border);
+  }
+
+  .lane-labels-header {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .lane-label {
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .lane-label-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .lane-label-text small {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  /* ---- Timeline Grid ---- */
+  .timeline-grid {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+  }
+
+  .months-header {
+    display: flex;
+    height: 44px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: #1b1b83;
+    z-index: 40;
+  }
+
+  .month-header {
+    width: var(--month-width);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-right: 1px solid var(--border);
+  }
+
+  .month-header.current { color: var(--accent); }
+
+  .quarter-badge {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-left: auto;
+    font-weight: 400;
+  }
+
+  /* ---- Swim Lane ---- */
+  .swim-lane {
+    position: relative;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 14px 0;
+  }
+
+  .swim-lane.lane-tinted {
+    /* tint color set via inline style --lane-tint */
+    background: var(--lane-tint);
+  }
+
+  .lane-label.lane-tinted {
+    background: var(--lane-tint);
+  }
+
+  .grid-lines {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    pointer-events: none;
+  }
+
+  .grid-line {
+    width: var(--month-width);
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+
+  /* ---- Today Marker ---- */
+  .today-marker {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--accent);
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .today-marker::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -3px;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  /* ---- Roadmap Item Bar ---- */
+  .roadmap-item {
+    position: relative;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    z-index: 10;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .roadmap-item:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+    filter: brightness(1.1);
+  }
+
+  .roadmap-item.status-planned    { background: rgba(74,111,165,0.35); border: 1px solid rgba(74,111,165,0.5); }
+  .roadmap-item.status-in-progress { background: rgba(234,51,35,0.35); border: 1px solid rgba(234,51,35,0.5); }
+  .roadmap-item.status-completed  { background: rgba(46,204,113,0.35); border: 1px solid rgba(46,204,113,0.5); }
+  .roadmap-item.status-at-risk    { background: rgba(240,160,48,0.35); border: 1px solid rgba(240,160,48,0.5); }
+
+  .item-progress {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    border-radius: 8px 0 0 8px;
+    pointer-events: none;
+  }
+
+  .item-progress.full { border-radius: 8px; }
+
+  .roadmap-item.status-planned .item-progress    { background: var(--blue-muted); }
+  .roadmap-item.status-in-progress .item-progress { background: var(--accent); }
+  .roadmap-item.status-completed .item-progress  { background: var(--green); }
+  .roadmap-item.status-at-risk .item-progress    { background: var(--amber); }
+
+  .item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  .item-pct {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.7);
+    margin-left: auto;
+    padding-left: 8px;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+  }
+
+  /* ---- Detail Panel ---- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,3,0.6);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .overlay.open { opacity: 1; pointer-events: all; }
+
+  .detail-panel {
+    position: fixed;
+    top: 0; right: 0;
+    width: 480px;
+    max-width: 90vw;
+    height: 100vh;
+    background: var(--bg-surface);
+    z-index: 210;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .detail-panel.open { transform: translateX(0); }
+
+  .detail-panel::-webkit-scrollbar { width: 5px; }
+  .detail-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+  .panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 28px 28px 0;
+  }
+
+  .panel-close {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .panel-close:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+  }
+
+  .panel-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .panel-status-badge.status-planned     { background: rgba(74,111,165,0.25); color: #7aa3d4; }
+  .panel-status-badge.status-in-progress { background: rgba(234,51,35,0.2); color: #ff6655; }
+  .panel-status-badge.status-completed   { background: rgba(46,204,113,0.2); color: #5dde9e; }
+  .panel-status-badge.status-at-risk     { background: rgba(240,160,48,0.2); color: #f0c060; }
+
+  .panel-title {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.25;
+    padding: 14px 28px 0;
+    letter-spacing: -0.5px;
+  }
+
+  .panel-timeline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 28px 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .panel-timeline svg { flex-shrink: 0; }
+
+  .panel-divider {
+    margin: 20px 28px;
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .panel-section {
+    padding: 0 28px;
+    margin-bottom: 20px;
+  }
+
+  .panel-section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .panel-section-value {
+    font-size: 15px;
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+
+  .panel-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 0 28px;
+    margin-bottom: 8px;
+  }
+
+  .panel-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .panel-meta-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .panel-meta-value {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .panel-dependencies { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .dep-tag {
+    padding: 3px 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .panel-progress { padding: 0 28px; margin-bottom: 20px; }
+
+  .progress-bar-track {
+    height: 5px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .total-width-sizer { display: block; }
+
+  @media (max-width: 768px) {
+    .header { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+    .controls { flex-wrap: wrap; gap: 10px; }
+    .lane-labels { width: 140px; }
+    .lane-label { padding: 0 10px; font-size: 12px; }
+    :root { --month-width: 150px; }
+    .detail-panel { width: 100vw; }
+    .legend { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="controls">
+    <div class="toggle-group">
+      <span class="toggle-label">Group by</span>
+      <div class="toggle-buttons">
+        <button class="toggle-btn active" data-group="team" onclick="setGrouping('team')">Team</button>
+        <button class="toggle-btn" data-group="domain" onclick="setGrouping('domain')">Domain</button>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue-muted)"></div>Planned</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>In Progress</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>At Risk</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Completed</div>
+    </div>
+    <button class="export-btn" onclick="exportToPptx()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1v10M4 7l4 4 4-4M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Export PPTX
+    </button>
+  </div>
+</header>
+
+<div class="timeline-container" id="timelineContainer">
+  <div class="lane-labels" id="laneLabels"></div>
+  <div class="timeline-grid" id="timelineGrid"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="panel-header">
+    <div id="panelBadge"></div>
+    <button class="panel-close" onclick="closePanel()">&times;</button>
+  </div>
+  <h2 class="panel-title" id="panelTitle"></h2>
+  <div class="panel-timeline" id="panelTimeline"></div>
+  <hr class="panel-divider">
+  <div class="panel-progress" id="panelProgress"></div>
+  <div class="panel-meta-grid" id="panelMeta"></div>
+  <hr class="panel-divider">
+  <div class="panel-section" id="panelWhy"></div>
+  <div class="panel-section" id="panelBusiness"></div>
+  <div class="panel-section" id="panelDeps"></div>
+</div>
+
+<script>
+// ============ DATA ============
+const MONTHS = [
+  { name: 'Jan', quarter: 'Q1' }, { name: 'Feb', quarter: 'Q1' }, { name: 'Mar', quarter: 'Q1' },
+  { name: 'Apr', quarter: 'Q2' }, { name: 'May', quarter: 'Q2' }, { name: 'Jun', quarter: 'Q2' },
+  { name: 'Jul', quarter: 'Q3' }, { name: 'Aug', quarter: 'Q3' }, { name: 'Sep', quarter: 'Q3' },
+  { name: 'Oct', quarter: 'Q4' }, { name: 'Nov', quarter: 'Q4' }, { name: 'Dec', quarter: 'Q4' }
+];
+
+const TEAMS = {
+  platform: { name: 'Platform', color: '#6366f1' },
+  data: { name: 'Data Engineering', color: '#06b6d4' },
+  betting: { name: 'Betting Products', color: '#f59e0b' },
+  fan: { name: 'Fan Engagement', color: '#ec4899' }
+};
+
+const DOMAINS = {
+  infrastructure: { name: 'Infrastructure', color: '#6366f1' },
+  analytics: { name: 'Analytics', color: '#06b6d4' },
+  product: { name: 'Product', color: '#f59e0b' },
+  compliance: { name: 'Compliance', color: '#10b981' }
+};
+
+const ITEMS = [
+  // ---- Platform (6 items) ----
+  {
+    id: 1, title: 'API Gateway v3',
+    team: 'platform', domain: 'infrastructure',
+    startMonth: 0, endMonth: 3, status: 'in-progress', progress: 65,
+    why: 'Our current API gateway is hitting scalability limits at peak traffic. v3 introduces rate limiting, improved caching, and horizontal auto-scaling to handle 10x current load.',
+    businessCase: 'Reduces infrastructure costs by 30% through intelligent routing. Eliminates 99th percentile latency spikes that currently affect live betting products during major sporting events.',
+    dependencies: ['Cloud Migration']
+  },
+  {
+    id: 5, title: 'GDPR Compliance Audit',
+    team: 'platform', domain: 'compliance',
+    startMonth: 3, endMonth: 5, status: 'planned', progress: 0,
+    why: 'Regulatory landscape is evolving and our last full audit was 18 months ago. Proactive compliance reduces legal risk and builds trust with enterprise clients.',
+    businessCase: 'Avoids potential fines up to €20M. Required for enterprise contract renewals worth $8M annually. Strengthens competitive position in regulated European markets.',
+    dependencies: []
+  },
+  {
+    id: 7, title: 'Cloud Migration (Phase 2)',
+    team: 'platform', domain: 'infrastructure',
+    startMonth: 5, endMonth: 9, status: 'planned', progress: 0,
+    why: 'Phase 1 moved stateless services to the cloud. Phase 2 migrates stateful workloads including databases and message queues, completing our hybrid-to-cloud transition.',
+    businessCase: 'Eliminates $1.2M/year in on-premise hardware costs. Reduces deployment time from 4 hours to 15 minutes. Enables multi-region failover for 99.99% uptime SLA.',
+    dependencies: ['API Gateway v3']
+  },
+  {
+    id: 13, title: 'Performance Monitoring Suite',
+    team: 'platform', domain: 'infrastructure',
+    startMonth: 8, endMonth: 11, status: 'planned', progress: 0,
+    why: 'As our system grows, we need unified observability across all services. Custom monitoring with SLA-aware alerting ensures we catch issues before clients do.',
+    businessCase: 'Reduces mean time to detection by 70%. Projected to prevent 15 major incidents per year, each costing an average of $50K in SLA credits and engineering time.',
+    dependencies: ['Cloud Migration (Phase 2)']
+  },
+  {
+    id: 15, title: 'Service Mesh Rollout',
+    team: 'platform', domain: 'infrastructure',
+    startMonth: 0, endMonth: 4, status: 'in-progress', progress: 50,
+    why: 'Microservice communication is growing complex with 80+ services. A service mesh provides consistent load balancing, mutual TLS, and traffic management without application changes.',
+    businessCase: 'Reduces inter-service latency by 20%. Eliminates 5 hours/week of manual traffic routing. Enables canary deployments that cut rollback incidents by 40%.',
+    dependencies: []
+  },
+  {
+    id: 16, title: 'Zero-Trust Security Model',
+    team: 'platform', domain: 'compliance',
+    startMonth: 9, endMonth: 12, status: 'planned', progress: 0,
+    why: 'Perimeter-based security is no longer sufficient as we move to cloud and support remote teams. Zero-trust ensures every request is authenticated and authorized regardless of origin.',
+    businessCase: 'Required by 3 enterprise clients representing $5M ARR. Reduces attack surface significantly and meets SOC 2 Type II requirements for next audit cycle.',
+    dependencies: ['Cloud Migration (Phase 2)']
+  },
+  // ---- Data Engineering (6 items) ----
+  {
+    id: 2, title: 'Real-Time Data Pipeline',
+    team: 'data', domain: 'infrastructure',
+    startMonth: 1, endMonth: 5, status: 'in-progress', progress: 40,
+    why: 'Moving from batch processing to real-time streaming enables sub-second data delivery to downstream consumers. Critical for live odds calculation and in-play statistics.',
+    businessCase: 'Enables real-time product features worth an estimated $4M ARR. Reduces data latency from 15 minutes to under 1 second for 85% of data flows.',
+    dependencies: ['API Gateway v3']
+  },
+  {
+    id: 6, title: 'ML Prediction Models v2',
+    team: 'data', domain: 'analytics',
+    startMonth: 4, endMonth: 8, status: 'planned', progress: 0,
+    why: 'Current models underperform on low-data sports and niche leagues. v2 introduces transfer learning and improved feature engineering for better coverage and accuracy.',
+    businessCase: 'Improves prediction accuracy by 15% across all sports. Enables expansion into 20+ new leagues, adding an estimated $2.1M in licensing revenue.',
+    dependencies: ['Real-Time Data Pipeline']
+  },
+  {
+    id: 10, title: 'Advanced Analytics Dashboard',
+    team: 'data', domain: 'analytics',
+    startMonth: 6, endMonth: 10, status: 'planned', progress: 0,
+    why: 'Clients lack visibility into how our data products perform for them. A self-service analytics dashboard gives them insights into usage, accuracy, and ROI.',
+    businessCase: 'Reduces support tickets by 35% through self-service insights. Expected to improve client retention by 12% and serve as an upsell vector for premium data packages.',
+    dependencies: ['ML Prediction Models v2']
+  },
+  {
+    id: 14, title: 'Data Quality Framework',
+    team: 'data', domain: 'analytics',
+    startMonth: 2, endMonth: 4, status: 'in-progress', progress: 70,
+    why: 'Inconsistent data quality across sources leads to downstream errors in odds and statistics. A centralized framework with automated validation catches issues at ingestion.',
+    businessCase: 'Reduces data-related incidents by 60%. Saves 20 engineering hours per week currently spent on manual data fixes. Improves client trust scores by ensuring 99.5% data accuracy.',
+    dependencies: []
+  },
+  {
+    id: 17, title: 'Data Lake Consolidation',
+    team: 'data', domain: 'infrastructure',
+    startMonth: 0, endMonth: 3, status: 'completed', progress: 100,
+    why: 'Data was scattered across 4 separate storage systems making cross-domain queries impossible. Consolidation into a unified lake enables holistic analytics and reduces storage costs.',
+    businessCase: 'Saved $800K/year in duplicate storage. Enabled 3 new cross-sport analytics products. Reduced query times from hours to minutes for business intelligence teams.',
+    dependencies: []
+  },
+  {
+    id: 18, title: 'Event Replay System',
+    team: 'data', domain: 'infrastructure',
+    startMonth: 9, endMonth: 12, status: 'planned', progress: 0,
+    why: 'When data pipeline bugs occur, there is no way to reprocess historical events. An event replay system allows us to fix issues retroactively and backfill corrected data.',
+    businessCase: 'Eliminates $300K/year in manual data correction. Reduces incident resolution time from days to hours. Critical for maintaining SLA commitments on data accuracy.',
+    dependencies: ['Real-Time Data Pipeline']
+  },
+  // ---- Betting Products (6 items) ----
+  {
+    id: 3, title: 'Live Odds Engine Rewrite',
+    team: 'betting', domain: 'product',
+    startMonth: 2, endMonth: 6, status: 'at-risk', progress: 25,
+    why: 'The legacy odds engine cannot support the new sports and bet types our clients are requesting. A ground-up rewrite using event-driven architecture will unlock rapid iteration.',
+    businessCase: 'Opens 12 new bet types across 5 sports verticals. Projected revenue increase of $6.2M in the first year through expanded market coverage.',
+    dependencies: ['Real-Time Data Pipeline', 'API Gateway v3']
+  },
+  {
+    id: 9, title: 'Responsible Gaming Tools',
+    team: 'betting', domain: 'compliance',
+    startMonth: 1, endMonth: 4, status: 'in-progress', progress: 55,
+    why: 'New regulations in 6 key markets require real-time player behavior monitoring and automated intervention tools. This is both a legal requirement and the right thing to do.',
+    businessCase: 'Required for license renewals in UK, Germany, and Sweden — markets representing $12M ARR. Reduces regulatory risk and positions us as an industry leader in player protection.',
+    dependencies: []
+  },
+  {
+    id: 12, title: 'Betting API Marketplace',
+    team: 'betting', domain: 'product',
+    startMonth: 7, endMonth: 11, status: 'planned', progress: 0,
+    why: 'Third-party developers want to build on our odds and data infrastructure. A marketplace with documentation, sandboxes, and billing creates a platform ecosystem.',
+    businessCase: 'Opens a new $3M revenue stream from API subscriptions. Creates network effects that strengthen our competitive moat and increase switching costs for clients.',
+    dependencies: ['Live Odds Engine Rewrite', 'API Gateway v3']
+  },
+  {
+    id: 19, title: 'Multi-Currency Settlement',
+    team: 'betting', domain: 'product',
+    startMonth: 0, endMonth: 2, status: 'completed', progress: 100,
+    why: 'Expanding into Latin America and Asia requires settlement in local currencies. Current USD-only settlement creates friction and FX risk for international operators.',
+    businessCase: 'Unlocks 8 new markets with combined TAM of $2.5B. Reduces operator FX costs by 15%. Required for 4 pending contracts worth $3.2M ARR.',
+    dependencies: []
+  },
+  {
+    id: 20, title: 'Fraud Detection Engine',
+    team: 'betting', domain: 'compliance',
+    startMonth: 5, endMonth: 8, status: 'planned', progress: 0,
+    why: 'Match-fixing and bonus abuse are increasing across the industry. An ML-powered fraud detection system will identify suspicious patterns in real-time across all bet types.',
+    businessCase: 'Expected to prevent $1.5M/year in fraudulent payouts. Required by 5 regulated jurisdictions. Reduces manual review workload by 60%.',
+    dependencies: ['Responsible Gaming Tools']
+  },
+  {
+    id: 21, title: 'Cash-Out Feature v2',
+    team: 'betting', domain: 'product',
+    startMonth: 9, endMonth: 12, status: 'planned', progress: 0,
+    why: 'Partial cash-out and auto cash-out are the top-requested features from operators. v2 adds granular controls and better pricing algorithms for in-play markets.',
+    businessCase: 'Increases operator margin by 3% on cash-out bets. Projected to drive 25% increase in in-play betting volume. Top competitive gap identified by sales team.',
+    dependencies: ['Live Odds Engine Rewrite']
+  },
+  // ---- Fan Engagement (6 items) ----
+  {
+    id: 4, title: 'Fan Dashboard 2.0',
+    team: 'fan', domain: 'product',
+    startMonth: 0, endMonth: 2, status: 'completed', progress: 100,
+    why: 'User research showed 68% of fans wanted personalized stats and predictions. The redesigned dashboard delivers a tailored experience based on favorite teams and players.',
+    businessCase: 'Increased daily active users by 42% in beta testing. Expected to drive 25% improvement in session duration and 18% increase in premium conversions.',
+    dependencies: []
+  },
+  {
+    id: 8, title: 'In-Play Widgets SDK',
+    team: 'fan', domain: 'product',
+    startMonth: 3, endMonth: 7, status: 'planned', progress: 0,
+    why: 'Clients want to embed live match visualizations directly in their apps. A drop-in SDK reduces integration time from weeks to hours and ensures consistent quality.',
+    businessCase: 'Targets 50 new client integrations in year one at $40K average deal size. Reduces client onboarding cost by 80% through self-service SDK.',
+    dependencies: ['Fan Dashboard 2.0']
+  },
+  {
+    id: 11, title: 'Social Features & Leaderboards',
+    team: 'fan', domain: 'product',
+    startMonth: 7, endMonth: 10, status: 'planned', progress: 0,
+    why: 'Community and competition drive retention. Leaderboards, friend groups, and prediction contests create stickiness and organic growth through social sharing.',
+    businessCase: 'Projected 30% increase in user retention. Social sharing is expected to drive 20% organic acquisition growth, reducing CAC by $2.50 per user.',
+    dependencies: ['Fan Dashboard 2.0', 'In-Play Widgets SDK']
+  },
+  {
+    id: 22, title: 'Push Notification Engine',
+    team: 'fan', domain: 'infrastructure',
+    startMonth: 1, endMonth: 4, status: 'in-progress', progress: 60,
+    why: 'Current notifications are batch-sent and generic. A real-time engine with personalization drives engagement by alerting fans about events they actually care about.',
+    businessCase: 'Increases app open rate by 35%. Targeted notifications show 4x higher click-through than generic ones. Expected to reduce churn by 18% in the first quarter.',
+    dependencies: []
+  },
+  {
+    id: 23, title: 'Streaming Integration Layer',
+    team: 'fan', domain: 'product',
+    startMonth: 4, endMonth: 7, status: 'planned', progress: 0,
+    why: 'Fans want to watch and track stats in one place. Integrating with major streaming platforms provides a unified second-screen experience during live events.',
+    businessCase: 'Partnership deals with 3 streaming providers worth $1.8M. Increases average session duration by 40%. Key differentiator against competitor fan platforms.',
+    dependencies: ['Fan Dashboard 2.0']
+  },
+  {
+    id: 24, title: 'Fan Loyalty Program',
+    team: 'fan', domain: 'product',
+    startMonth: 10, endMonth: 12, status: 'planned', progress: 0,
+    why: 'High-value fans have no structured incentive to stay engaged year-round. A points-based loyalty program rewards consistent engagement and creates off-season retention.',
+    businessCase: 'Projected to increase annual retention by 22%. Loyalty members show 3x higher lifetime value. Creates a data flywheel for better personalization.',
+    dependencies: ['Social Features & Leaderboards']
+  }
+];
+
+// ============ STATE ============
+let grouping = 'team';
+const MONTH_WIDTH = 200;
+const YEAR = 2026;
+const ITEM_HEIGHT = 48;
+const ROW_GAP = 8;
+const ROW_STEP = ITEM_HEIGHT + ROW_GAP;
+
+// ============ RENDER ============
+function render() {
+  const groups = grouping === 'team' ? TEAMS : DOMAINS;
+  const groupKey = grouping === 'team' ? 'team' : 'domain';
+
+  const labelsEl = document.getElementById('laneLabels');
+  labelsEl.innerHTML = `<div class="lane-labels-header">${grouping === 'team' ? 'Teams' : 'Domains'}</div>`;
+  let laneIdx = 0;
+  for (const [key, group] of Object.entries(groups)) {
+    const items = ITEMS.filter(i => i[groupKey] === key);
+    const rows = getRowCount(items);
+    const laneHeight = Math.max(80, rows * ROW_STEP + 28);
+    const isAlt = laneIdx % 2 === 1;
+    const tintClass = isAlt ? ' lane-tinted' : '';
+    const tintStyle = isAlt ? `--lane-tint:${group.color}15;` : '';
+    labelsEl.innerHTML += `
+      <div class="lane-label${tintClass}" style="height:${laneHeight}px;${tintStyle}border-left:3px solid ${group.color};">
+        <div class="lane-label-text">
+          ${group.name}
+        </div>
+      </div>`;
+    laneIdx++;
+  }
+
+  const gridEl = document.getElementById('timelineGrid');
+  const currentMonth = new Date().getMonth();
+
+  let monthsHeader = '<div class="months-header">';
+  MONTHS.forEach((m, i) => {
+    const isCurrent = i === currentMonth;
+    const showQuarter = i % 3 === 0;
+    monthsHeader += `<div class="month-header${isCurrent ? ' current' : ''}">
+      ${m.name}${showQuarter ? `<span class="quarter-badge">${m.quarter}</span>` : ''}
+    </div>`;
+  });
+  monthsHeader += '</div>';
+
+  let lanesHtml = '';
+  let gridLaneIdx = 0;
+  for (const [key, group] of Object.entries(groups)) {
+    const items = ITEMS.filter(i => i[groupKey] === key);
+    const rows = getRowCount(items);
+    const laneHeight = Math.max(80, rows * ROW_STEP + 28);
+    const isGridAlt = gridLaneIdx % 2 === 1;
+    const gridTintClass = isGridAlt ? ' lane-tinted' : '';
+    const gridTintStyle = isGridAlt ? `--lane-tint:${group.color}10;` : '';
+
+    let gridLines = '<div class="grid-lines">';
+    MONTHS.forEach(() => { gridLines += '<div class="grid-line"></div>'; });
+    gridLines += '</div>';
+
+    let itemsHtml = '';
+    const rowAssignments = getRowAssignments(items);
+    items.forEach(item => {
+      const left = item.startMonth * MONTH_WIDTH;
+      const width = (item.endMonth - item.startMonth) * MONTH_WIDTH;
+      const row = rowAssignments[item.id];
+      const top = 14 + row * ROW_STEP;
+      const fullClass = item.progress === 100 ? ' full' : '';
+      const pctLabel = item.progress > 0 && item.progress < 100 ? `<span class="item-pct">${item.progress}%</span>` : '';
+      itemsHtml += `
+        <div class="roadmap-item status-${item.status}"
+             style="position:absolute; left:${left + 6}px; width:${width - 12}px; top:${top}px;"
+             onclick="openPanel(${item.id})"
+             title="${item.title}">
+          <div class="item-progress${fullClass}" style="width:${item.progress}%"></div>
+          <span class="item-title">${item.title}</span>
+          ${pctLabel}
+        </div>`;
+    });
+
+    const todayX = currentMonth * MONTH_WIDTH + (new Date().getDate() / 31) * MONTH_WIDTH;
+    const todayHtml = `<div class="today-marker" style="left:${todayX}px"></div>`;
+
+    lanesHtml += `<div class="swim-lane${gridTintClass}" style="height:${laneHeight}px;${gridTintStyle}">${gridLines}${todayHtml}${itemsHtml}</div>`;
+    gridLaneIdx++;
+  }
+
+  gridEl.innerHTML = monthsHeader + `<div class="total-width-sizer" style="width:${12 * MONTH_WIDTH}px;position:relative">${lanesHtml}</div>`;
+
+  setTimeout(() => {
+    document.getElementById('timelineContainer').scrollLeft = 0;
+  }, 0);
+}
+
+function getRowCount(items) {
+  const a = getRowAssignments(items);
+  let max = 0;
+  for (const r of Object.values(a)) { if (r + 1 > max) max = r + 1; }
+  return Math.max(1, max);
+}
+
+function getRowAssignments(items) {
+  const sorted = [...items].sort((a, b) => a.startMonth - b.startMonth || a.endMonth - b.endMonth);
+  const assignments = {};
+  const rowEnds = [];
+  for (const item of sorted) {
+    let placed = false;
+    for (let r = 0; r < rowEnds.length; r++) {
+      if (rowEnds[r] <= item.startMonth) {
+        rowEnds[r] = item.endMonth;
+        assignments[item.id] = r;
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      assignments[item.id] = rowEnds.length;
+      rowEnds.push(item.endMonth);
+    }
+  }
+  return assignments;
+}
+
+// ============ GROUPING ============
+function setGrouping(g) {
+  grouping = g;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.group === g));
+  render();
+}
+
+// ============ DETAIL PANEL ============
+function openPanel(id) {
+  const item = ITEMS.find(i => i.id === id);
+  if (!item) return;
+
+  const team = TEAMS[item.team];
+  const domain = DOMAINS[item.domain];
+  const fmt = d => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const startDate = new Date(YEAR, item.startMonth, 1);
+  const endDate = new Date(YEAR, item.endMonth, 0);
+
+  document.getElementById('panelBadge').innerHTML = `<span class="panel-status-badge status-${item.status}">${item.status.replace('-', ' ')}</span>`;
+  document.getElementById('panelTitle').textContent = item.title;
+  document.getElementById('panelTimeline').innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    ${fmt(startDate)} &mdash; ${fmt(endDate)}
+    <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">${item.endMonth - item.startMonth} months</span>`;
+
+  const statusColor = item.status === 'completed' ? 'var(--green)' : item.status === 'in-progress' ? 'var(--accent)' : item.status === 'at-risk' ? 'var(--amber)' : 'var(--blue-muted)';
+  document.getElementById('panelProgress').innerHTML = `
+    <div class="progress-label">
+      <span class="panel-section-label" style="margin-bottom:0">Progress</span>
+      <span style="font-size:14px;font-weight:700;color:${statusColor}">${item.progress}%</span>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" style="width:${item.progress}%;background:${statusColor}"></div>
+    </div>`;
+
+  document.getElementById('panelMeta').innerHTML = `
+    <div class="panel-meta-item">
+      <span class="panel-meta-label">Team</span>
+      <span class="panel-meta-value" style="color:${team.color}">${team.name}</span>
+    </div>
+    <div class="panel-meta-item">
+      <span class="panel-meta-label">Domain</span>
+      <span class="panel-meta-value" style="color:${domain.color}">${domain.name}</span>
+    </div>`;
+
+  document.getElementById('panelWhy').innerHTML = `
+    <div class="panel-section-label">Why we're doing this</div>
+    <div class="panel-section-value">${item.why}</div>`;
+
+  document.getElementById('panelBusiness').innerHTML = `
+    <div class="panel-section-label">Business Case</div>
+    <div class="panel-section-value">${item.businessCase}</div>`;
+
+  if (item.dependencies.length > 0) {
+    document.getElementById('panelDeps').innerHTML = `
+      <div class="panel-section-label">Dependencies</div>
+      <div class="panel-dependencies">${item.dependencies.map(d => `<span class="dep-tag">${d}</span>`).join('')}</div>`;
+    document.getElementById('panelDeps').style.display = '';
+  } else {
+    document.getElementById('panelDeps').style.display = 'none';
+  }
+
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('detailPanel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('detailPanel').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+// ============ PPTX EXPORT ============
+function exportToPptx() {
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE';
+  pptx.defineSlideMaster({
+    title: 'ROADMAP',
+    background: { color: '00003c' }
+  });
+
+  const STATUS_COLORS = {
+    'planned': '4a6fa5',
+    'in-progress': 'ea3323',
+    'completed': '2ecc71',
+    'at-risk': 'f0a030'
+  };
+
+  const groups = grouping === 'team' ? TEAMS : DOMAINS;
+  const groupKey = grouping === 'team' ? 'team' : 'domain';
+
+  // ---- Slide 1: Timeline Overview ----
+  const slide1 = pptx.addSlide({ masterName: 'ROADMAP' });
+
+  slide1.addText(`Product Roadmap ${YEAR}`, {
+    x: 0.5, y: 0.25, w: 8, h: 0.5,
+    fontSize: 22, fontFace: 'Segoe UI',
+    color: 'ffffff', bold: true
+  });
+
+  slide1.addText(`Grouped by ${grouping === 'team' ? 'Team' : 'Domain'}`, {
+    x: 0.5, y: 0.65, w: 4, h: 0.3,
+    fontSize: 11, fontFace: 'Segoe UI',
+    color: '999999'
+  });
+
+  // Legend
+  const legendItems = [
+    { label: 'Planned', color: '4a6fa5' },
+    { label: 'In Progress', color: 'ea3323' },
+    { label: 'At Risk', color: 'f0a030' },
+    { label: 'Completed', color: '2ecc71' }
+  ];
+  legendItems.forEach((li, i) => {
+    const lx = 8.5 + i * 1.2;
+    slide1.addShape(pptx.ShapeType.ellipse, {
+      x: lx, y: 0.35, w: 0.12, h: 0.12, fill: { color: li.color }
+    });
+    slide1.addText(li.label, {
+      x: lx + 0.16, y: 0.27, w: 1, h: 0.28,
+      fontSize: 8, fontFace: 'Segoe UI', color: '999999'
+    });
+  });
+
+  // Month headers
+  const labelColW = 1.6;
+  const chartLeft = labelColW + 0.1;
+  const chartW = 13.33 - chartLeft - 0.3;
+  const monthW = chartW / 12;
+  const headerY = 1.05;
+
+  MONTHS.forEach((m, i) => {
+    slide1.addText(m.name.toUpperCase(), {
+      x: chartLeft + i * monthW, y: headerY, w: monthW, h: 0.3,
+      fontSize: 7, fontFace: 'Segoe UI', color: '888888',
+      align: 'center'
+    });
+    // Vertical grid line
+    slide1.addShape(pptx.ShapeType.line, {
+      x: chartLeft + i * monthW, y: headerY + 0.3,
+      w: 0, h: 6,
+      line: { color: '1a1a5a', width: 0.5 }
+    });
+  });
+
+  // Quarter labels
+  ['Q1', 'Q2', 'Q3', 'Q4'].forEach((q, i) => {
+    slide1.addText(q, {
+      x: chartLeft + i * 3 * monthW, y: headerY - 0.22, w: 3 * monthW, h: 0.22,
+      fontSize: 7, fontFace: 'Segoe UI', color: '555555', align: 'center'
+    });
+  });
+
+  let yPos = headerY + 0.4;
+  const barH = 0.32;
+  const rowStep = barH + 0.06;
+
+  for (const [key, group] of Object.entries(groups)) {
+    const items = ITEMS.filter(i => i[groupKey] === key);
+    const rowAssignments = getRowAssignments(items);
+    const rowCount = getRowCount(items);
+
+    // Group label
+    slide1.addText(group.name, {
+      x: 0.3, y: yPos, w: labelColW, h: rowCount * rowStep,
+      fontSize: 10, fontFace: 'Segoe UI', color: 'ffffff',
+      bold: true, valign: 'middle'
+    });
+
+    // Subtle lane background
+    slide1.addShape(pptx.ShapeType.rect, {
+      x: chartLeft, y: yPos - 0.02,
+      w: chartW, h: rowCount * rowStep + 0.04,
+      fill: { color: '080840' },
+      line: { color: '1a1a5a', width: 0.3 }
+    });
+
+    items.forEach(item => {
+      const row = rowAssignments[item.id];
+      const bx = chartLeft + item.startMonth * monthW;
+      const bw = (item.endMonth - item.startMonth) * monthW;
+      const by = yPos + row * rowStep;
+
+      slide1.addShape(pptx.ShapeType.roundRect, {
+        x: bx + 0.02, y: by, w: bw - 0.04, h: barH,
+        rectRadius: 0.05,
+        fill: { color: STATUS_COLORS[item.status] }
+      });
+
+      slide1.addText(item.title, {
+        x: bx + 0.1, y: by, w: bw - 0.2, h: barH,
+        fontSize: 8, fontFace: 'Segoe UI', color: 'ffffff',
+        bold: true, valign: 'middle', shrinkText: true
+      });
+    });
+
+    yPos += rowCount * rowStep + 0.2;
+  }
+
+  // ---- Slide 2+: Detail slides per group ----
+  for (const [key, group] of Object.entries(groups)) {
+    const items = ITEMS.filter(i => i[groupKey] === key);
+    if (items.length === 0) continue;
+
+    const slide = pptx.addSlide({ masterName: 'ROADMAP' });
+
+    slide.addText(group.name, {
+      x: 0.5, y: 0.25, w: 10, h: 0.5,
+      fontSize: 22, fontFace: 'Segoe UI',
+      color: 'ffffff', bold: true
+    });
+
+    slide.addShape(pptx.ShapeType.line, {
+      x: 0.5, y: 0.8, w: 12.3, h: 0,
+      line: { color: '1a1a5a', width: 1 }
+    });
+
+    const cols = Math.min(items.length, 3);
+    const cardW = (12.3 / cols) - 0.15;
+    items.forEach((item, idx) => {
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+      const cx = 0.5 + col * (cardW + 0.15);
+      const cy = 1.0 + row * 3.2;
+      const team = TEAMS[item.team];
+      const domain = DOMAINS[item.domain];
+
+      // Card bg
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: cx, y: cy, w: cardW, h: 2.9,
+        rectRadius: 0.08,
+        fill: { color: '0a0a4a' },
+        line: { color: '1a1a5a', width: 0.5 }
+      });
+
+      // Status strip
+      slide.addShape(pptx.ShapeType.rect, {
+        x: cx, y: cy, w: cardW, h: 0.06,
+        fill: { color: STATUS_COLORS[item.status] }
+      });
+
+      // Title
+      slide.addText(item.title, {
+        x: cx + 0.15, y: cy + 0.15, w: cardW - 0.3, h: 0.35,
+        fontSize: 12, fontFace: 'Segoe UI', color: 'ffffff', bold: true
+      });
+
+      // Status + timeline
+      const startLabel = MONTHS[item.startMonth].name;
+      const endLabel = MONTHS[Math.min(item.endMonth - 1, 11)].name;
+      slide.addText(`${item.status.replace('-', ' ').toUpperCase()}  ·  ${startLabel} — ${endLabel} ${YEAR}`, {
+        x: cx + 0.15, y: cy + 0.48, w: cardW - 0.3, h: 0.22,
+        fontSize: 8, fontFace: 'Segoe UI', color: STATUS_COLORS[item.status]
+      });
+
+      // Team & Domain
+      slide.addText(`Team: ${team.name}   |   Domain: ${domain.name}`, {
+        x: cx + 0.15, y: cy + 0.7, w: cardW - 0.3, h: 0.2,
+        fontSize: 8, fontFace: 'Segoe UI', color: '888888'
+      });
+
+      // Why
+      slide.addText('WHY', {
+        x: cx + 0.15, y: cy + 0.95, w: cardW - 0.3, h: 0.18,
+        fontSize: 7, fontFace: 'Segoe UI', color: '666666', bold: true
+      });
+      slide.addText(item.why, {
+        x: cx + 0.15, y: cy + 1.1, w: cardW - 0.3, h: 0.75,
+        fontSize: 8, fontFace: 'Segoe UI', color: 'cccccc',
+        valign: 'top', shrinkText: true
+      });
+
+      // Business Case
+      slide.addText('BUSINESS CASE', {
+        x: cx + 0.15, y: cy + 1.9, w: cardW - 0.3, h: 0.18,
+        fontSize: 7, fontFace: 'Segoe UI', color: '666666', bold: true
+      });
+      slide.addText(item.businessCase, {
+        x: cx + 0.15, y: cy + 2.05, w: cardW - 0.3, h: 0.7,
+        fontSize: 8, fontFace: 'Segoe UI', color: 'cccccc',
+        valign: 'top', shrinkText: true
+      });
+    });
+  }
+
+  pptx.writeFile({ fileName: `Roadmap_${YEAR}_${grouping}.pptx` });
+}
+
+// ============ INIT ============
+render();
+</script>
+</body>
+</html>
