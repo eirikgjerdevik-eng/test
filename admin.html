@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Roadmap</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #00003c;
+    --bg-surface: #0a0a4a;
+    --bg-surface-hover: #12125a;
+    --bg-elevated: #16166a;
+    --accent: #ea3323;
+    --accent-hover: #ff4433;
+    --green: #2ecc71;
+    --blue-muted: #4a6fa5;
+    --amber: #f0a030;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255,255,255,0.6);
+    --text-muted: rgba(255,255,255,0.35);
+    --border: rgba(255,255,255,0.08);
+    --border-light: rgba(255,255,255,0.12);
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+  }
+
+  body {
+    font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ---- Header ---- */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 40px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg-primary);
+    z-index: 100;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 16px; }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 600;
+    padding: 6px 14px; border: 1px solid var(--border-light); border-radius: 6px; transition: all 0.2s;
+  }
+  .back-link:hover { color: var(--text-primary); background: var(--bg-surface); border-color: rgba(255,255,255,0.2); }
+
+  .header-title { font-size: 16px; font-weight: 700; }
+
+  /* ---- Tabs ---- */
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 40px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-primary);
+  }
+
+  .tab-btn {
+    padding: 12px 24px;
+    background: none; border: none; border-bottom: 2px solid transparent;
+    color: var(--text-secondary); font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--text-primary); }
+  .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--accent); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ---- Buttons ---- */
+  .btn-new {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 18px; background: var(--accent); color: white; border: none;
+    border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: background 0.2s; font-family: inherit;
+  }
+  .btn-new:hover { background: var(--accent-hover); }
+
+  .btn-cancel {
+    padding: 8px 20px; background: transparent; border: 1px solid var(--border-light);
+    border-radius: 6px; color: var(--text-secondary); font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.2s;
+  }
+  .btn-cancel:hover { background: var(--bg-elevated); color: var(--text-primary); }
+
+  .btn-save {
+    padding: 8px 24px; background: var(--accent); border: none; border-radius: 6px;
+    color: white; font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: background 0.2s;
+  }
+  .btn-save:hover { background: var(--accent-hover); }
+
+  .btn-icon {
+    width: 30px; height: 30px; border: 1px solid var(--border-light); border-radius: 6px;
+    background: transparent; color: var(--text-secondary); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 14px;
+  }
+  .btn-icon:hover { background: var(--bg-elevated); color: var(--text-primary); }
+  .btn-icon.delete:hover { background: rgba(234,51,35,0.15); color: var(--accent); border-color: rgba(234,51,35,0.3); }
+
+  /* ---- Toolbar ---- */
+  .toolbar {
+    padding: 16px 40px; display: flex; align-items: center; gap: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-wrapper { position: relative; flex: 1; max-width: 400px; }
+
+  .search-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%; padding: 8px 14px 8px 36px; background: var(--bg-surface);
+    border: 1px solid var(--border-light); border-radius: 6px;
+    color: var(--text-primary); font-size: 14px; font-family: inherit; outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: rgba(255,255,255,0.25); }
+
+  .item-count { font-size: 13px; color: var(--text-muted); margin-left: auto; }
+
+  /* ---- Table ---- */
+  .table-container { padding: 0 40px 40px; overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+
+  thead th {
+    text-align: left; padding: 12px 14px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);
+    border-bottom: 1px solid var(--border-light); cursor: pointer; user-select: none;
+    white-space: nowrap; transition: color 0.2s;
+  }
+  thead th:hover { color: var(--text-secondary); }
+  thead th.sorted { color: var(--text-primary); }
+  thead th .sort-arrow { margin-left: 4px; font-size: 10px; opacity: 0; transition: opacity 0.2s; }
+  thead th.sorted .sort-arrow { opacity: 1; }
+
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--bg-surface); }
+
+  td { padding: 12px 14px; font-size: 14px; white-space: nowrap; vertical-align: middle; }
+  td.title-cell { font-weight: 600; white-space: normal; min-width: 200px; max-width: 300px; }
+
+  .status-badge {
+    display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .status-badge.planned     { background: rgba(74,111,165,0.25); color: #7aa3d4; }
+  .status-badge.in-progress { background: rgba(234,51,35,0.2); color: #ff6655; }
+  .status-badge.completed   { background: rgba(46,204,113,0.2); color: #5dde9e; }
+  .status-badge.at-risk     { background: rgba(240,160,48,0.2); color: #f0c060; }
+
+  .progress-mini { display: flex; align-items: center; gap: 8px; }
+  .progress-mini-bar { width: 60px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+  .progress-mini-fill { height: 100%; border-radius: 2px; }
+  .progress-mini-text { font-size: 12px; color: var(--text-secondary); min-width: 32px; }
+
+  .team-badge { font-size: 12px; font-weight: 600; }
+
+  .action-btns { display: flex; gap: 6px; }
+
+  /* ---- Color swatch in table ---- */
+  .color-swatch {
+    display: inline-block; width: 14px; height: 14px; border-radius: 3px;
+    vertical-align: middle; margin-right: 8px; border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  /* ---- Modal ---- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,3,0.7); z-index: 200;
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 12px;
+    width: 600px; max-width: 92vw; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+  }
+  .modal::-webkit-scrollbar { width: 5px; }
+  .modal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; border-bottom: 1px solid var(--border);
+  }
+  .modal-title { font-size: 18px; font-weight: 700; }
+
+  .modal-close {
+    width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border-light);
+    background: transparent; color: var(--text-secondary); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s;
+  }
+  .modal-close:hover { background: var(--bg-elevated); color: var(--text-primary); }
+
+  .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+
+  .form-row { display: flex; gap: 16px; }
+
+  .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+
+  .form-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--text-muted);
+  }
+
+  .form-input, .form-select, .form-textarea {
+    padding: 9px 12px; background: var(--bg-primary); border: 1px solid var(--border-light);
+    border-radius: 6px; color: var(--text-primary); font-size: 14px; font-family: inherit;
+    outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: rgba(255,255,255,0.3); }
+  .form-select { cursor: pointer; }
+  .form-select option { background: var(--bg-surface); color: var(--text-primary); }
+  .form-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+  /* Date input styling */
+  input[type="date"] { color-scheme: dark; }
+
+  .range-group { display: flex; align-items: center; gap: 12px; }
+
+  .form-range {
+    flex: 1; -webkit-appearance: none; appearance: none; height: 4px;
+    background: rgba(255,255,255,0.08); border-radius: 2px; outline: none;
+  }
+  .form-range::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--accent); cursor: pointer;
+  }
+
+  .range-value { font-size: 14px; font-weight: 700; min-width: 36px; text-align: right; color: var(--text-secondary); }
+
+  .modal-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 24px; border-top: 1px solid var(--border);
+  }
+
+  .form-error { font-size: 12px; color: var(--accent); margin-top: 2px; display: none; }
+  .form-error.show { display: block; }
+
+  /* ---- Delete confirm ---- */
+  .confirm-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,3,0.7); z-index: 300;
+    display: none; align-items: center; justify-content: center;
+  }
+  .confirm-overlay.open { display: flex; }
+
+  .confirm-box {
+    background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 12px;
+    padding: 28px; width: 400px; max-width: 90vw; box-shadow: var(--shadow-lg); text-align: center;
+  }
+  .confirm-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .confirm-text { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+  .confirm-btns { display: flex; justify-content: center; gap: 10px; }
+
+  .btn-delete-confirm {
+    padding: 8px 24px; background: var(--accent); border: none; border-radius: 6px;
+    color: white; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .btn-delete-confirm:hover { background: var(--accent-hover); }
+
+  /* ---- Empty state ---- */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty-state-title { font-size: 18px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+
+  /* ---- Teams/Domains list ---- */
+  .entity-list { padding: 20px 40px; }
+
+  .entity-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .entity-header-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+
+  .entity-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 18px; background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 8px; transition: border-color 0.2s;
+  }
+  .entity-card:hover { border-color: var(--border-light); }
+
+  .entity-color {
+    width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .entity-name { font-size: 15px; font-weight: 600; flex: 1; }
+
+  .entity-key {
+    font-size: 12px; color: var(--text-muted); font-family: 'Courier New', monospace;
+    background: var(--bg-primary); padding: 2px 8px; border-radius: 4px;
+  }
+
+  .entity-count { font-size: 12px; color: var(--text-muted); margin-right: 8px; }
+
+  /* Small modal for teams/domains */
+  .modal.small { width: 420px; }
+
+  @media (max-width: 768px) {
+    .header { padding: 12px 16px; }
+    .tabs { padding: 0 16px; }
+    .toolbar { padding: 12px 16px; }
+    .table-container { padding: 0 16px 16px; }
+    .entity-list { padding: 20px 16px; }
+    .form-row { flex-direction: column; gap: 18px; }
+    .modal { width: 100%; border-radius: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <a href="index.html" class="back-link">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back to Roadmap
+    </a>
+    <span class="header-title">Manage Roadmap</span>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="items" onclick="switchTab('items')">Roadmap Items</button>
+  <button class="tab-btn" data-tab="teams" onclick="switchTab('teams')">Teams</button>
+  <button class="tab-btn" data-tab="domains" onclick="switchTab('domains')">Domains</button>
+</div>
+
+<!-- ===== ITEMS TAB ===== -->
+<div class="tab-content active" id="tab-items">
+  <div class="toolbar">
+    <div class="search-wrapper">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search items..." oninput="renderItemsTable()">
+    </div>
+    <span class="item-count" id="itemCount"></span>
+    <button class="btn-new" onclick="openItemModal()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      New Item
+    </button>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('title')" id="th-title">Title <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('team')" id="th-team">Team <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('domain')" id="th-domain">Domain <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('status')" id="th-status">Status <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('progress')" id="th-progress">Progress <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('startDate')" id="th-startDate">Start <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('endDate')" id="th-endDate">End <span class="sort-arrow"></span></th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="empty-state-title">No items found</div>
+      <div>Try adjusting your search or create a new item.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TEAMS TAB ===== -->
+<div class="tab-content" id="tab-teams">
+  <div class="entity-list">
+    <div class="entity-header">
+      <span class="entity-header-title" id="teamsCount"></span>
+      <button class="btn-new" onclick="openTeamModal()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        New Team
+      </button>
+    </div>
+    <div id="teamsList"></div>
+  </div>
+</div>
+
+<!-- ===== DOMAINS TAB ===== -->
+<div class="tab-content" id="tab-domains">
+  <div class="entity-list">
+    <div class="entity-header">
+      <span class="entity-header-title" id="domainsCount"></span>
+      <button class="btn-new" onclick="openDomainModal()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        New Domain
+      </button>
+    </div>
+    <div id="domainsList"></div>
+  </div>
+</div>
+
+<!-- ===== ITEM MODAL ===== -->
+<div class="modal-overlay" id="itemModalOverlay" onclick="if(event.target===this)closeItemModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="itemModalTitle">New Item</span>
+      <button class="modal-close" onclick="closeItemModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input type="text" class="form-input" id="fTitle" placeholder="Enter item title">
+        <div class="form-error" id="errTitle">Title is required</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Team</label>
+          <select class="form-select" id="fTeam"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Domain</label>
+          <select class="form-select" id="fDomain"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Start Date</label>
+          <input type="date" class="form-input" id="fStart">
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Date</label>
+          <input type="date" class="form-input" id="fEnd">
+          <div class="form-error" id="errEnd">End date must be after start date</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="fStatus">
+            <option value="planned">Planned</option>
+            <option value="in-progress">In Progress</option>
+            <option value="at-risk">At Risk</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Progress</label>
+          <div class="range-group">
+            <input type="range" class="form-range" id="fProgress" min="0" max="100" value="0" oninput="document.getElementById('progressVal').textContent=this.value+'%'">
+            <span class="range-value" id="progressVal">0%</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Why we're doing this</label>
+        <textarea class="form-textarea" id="fWhy" placeholder="Strategic rationale..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Business Case</label>
+        <textarea class="form-textarea" id="fBusiness" placeholder="Expected impact and metrics..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dependencies (comma-separated)</label>
+        <input type="text" class="form-input" id="fDeps" placeholder="e.g. API Gateway v3, Cloud Migration">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeItemModal()">Cancel</button>
+      <button class="btn-save" onclick="saveItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TEAM MODAL ===== -->
+<div class="modal-overlay" id="teamModalOverlay" onclick="if(event.target===this)closeTeamModal()">
+  <div class="modal small">
+    <div class="modal-header">
+      <span class="modal-title" id="teamModalTitle">New Team</span>
+      <button class="modal-close" onclick="closeTeamModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Team Name</label>
+        <input type="text" class="form-input" id="fTeamName" placeholder="e.g. Platform Engineering">
+        <div class="form-error" id="errTeamName">Name is required</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Color</label>
+        <input type="color" class="form-input" id="fTeamColor" value="#6366f1" style="height:42px;padding:4px;cursor:pointer;">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeTeamModal()">Cancel</button>
+      <button class="btn-save" onclick="saveTeam()">Save Team</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DOMAIN MODAL ===== -->
+<div class="modal-overlay" id="domainModalOverlay" onclick="if(event.target===this)closeDomainModal()">
+  <div class="modal small">
+    <div class="modal-header">
+      <span class="modal-title" id="domainModalTitle">New Domain</span>
+      <button class="modal-close" onclick="closeDomainModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Domain Name</label>
+        <input type="text" class="form-input" id="fDomainName" placeholder="e.g. Infrastructure">
+        <div class="form-error" id="errDomainName">Name is required</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Color</label>
+        <input type="color" class="form-input" id="fDomainColor" value="#06b6d4" style="height:42px;padding:4px;cursor:pointer;">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeDomainModal()">Cancel</button>
+      <button class="btn-save" onclick="saveDomain()">Save Domain</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DELETE CONFIRM ===== -->
+<div class="confirm-overlay" id="confirmOverlay" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirmTitle">Delete Item</div>
+    <div class="confirm-text" id="confirmText"></div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-delete-confirm" onclick="confirmDeleteAction()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const DEFAULT_TEAMS = {
+  platform: { name: 'Platform', color: '#6366f1' },
+  data: { name: 'Data Engineering', color: '#06b6d4' },
+  betting: { name: 'Betting Products', color: '#f59e0b' },
+  fan: { name: 'Fan Engagement', color: '#ec4899' }
+};
+
+const DEFAULT_DOMAINS = {
+  infrastructure: { name: 'Infrastructure', color: '#6366f1' },
+  analytics: { name: 'Analytics', color: '#06b6d4' },
+  product: { name: 'Product', color: '#f59e0b' },
+  compliance: { name: 'Compliance', color: '#10b981' }
+};
+
+const DEFAULT_ITEMS = [
+  { id: 1, title: 'API Gateway v3', team: 'platform', domain: 'infrastructure', startDate: '2026-01-01', endDate: '2026-03-31', status: 'in-progress', progress: 65, why: 'Our current API gateway is hitting scalability limits at peak traffic.', businessCase: 'Reduces infrastructure costs by 30% through intelligent routing.', dependencies: ['Cloud Migration'] },
+  { id: 5, title: 'GDPR Compliance Audit', team: 'platform', domain: 'compliance', startDate: '2026-04-01', endDate: '2026-05-31', status: 'planned', progress: 0, why: 'Regulatory landscape is evolving.', businessCase: 'Avoids potential fines up to \u20ac20M.', dependencies: [] },
+  { id: 7, title: 'Cloud Migration (Phase 2)', team: 'platform', domain: 'infrastructure', startDate: '2026-06-01', endDate: '2026-09-30', status: 'planned', progress: 0, why: 'Phase 2 migrates stateful workloads.', businessCase: 'Eliminates $1.2M/year in on-premise hardware costs.', dependencies: ['API Gateway v3'] },
+  { id: 13, title: 'Performance Monitoring Suite', team: 'platform', domain: 'infrastructure', startDate: '2026-09-01', endDate: '2026-11-30', status: 'planned', progress: 0, why: 'Unified observability across all services.', businessCase: 'Reduces mean time to detection by 70%.', dependencies: ['Cloud Migration (Phase 2)'] },
+  { id: 15, title: 'Service Mesh Rollout', team: 'platform', domain: 'infrastructure', startDate: '2026-01-01', endDate: '2026-04-30', status: 'in-progress', progress: 50, why: 'Microservice communication is growing complex.', businessCase: 'Reduces inter-service latency by 20%.', dependencies: [] },
+  { id: 16, title: 'Zero-Trust Security Model', team: 'platform', domain: 'compliance', startDate: '2026-10-01', endDate: '2026-12-31', status: 'planned', progress: 0, why: 'Perimeter-based security is no longer sufficient.', businessCase: 'Required by 3 enterprise clients representing $5M ARR.', dependencies: ['Cloud Migration (Phase 2)'] },
+  { id: 2, title: 'Real-Time Data Pipeline', team: 'data', domain: 'infrastructure', startDate: '2026-02-01', endDate: '2026-05-31', status: 'in-progress', progress: 40, why: 'Moving from batch processing to real-time streaming.', businessCase: 'Enables real-time product features worth $4M ARR.', dependencies: ['API Gateway v3'] },
+  { id: 6, title: 'ML Prediction Models v2', team: 'data', domain: 'analytics', startDate: '2026-05-01', endDate: '2026-08-31', status: 'planned', progress: 0, why: 'Current models underperform on niche leagues.', businessCase: 'Improves prediction accuracy by 15%.', dependencies: ['Real-Time Data Pipeline'] },
+  { id: 10, title: 'Advanced Analytics Dashboard', team: 'data', domain: 'analytics', startDate: '2026-07-01', endDate: '2026-10-31', status: 'planned', progress: 0, why: 'Clients lack visibility into data product performance.', businessCase: 'Reduces support tickets by 35%.', dependencies: ['ML Prediction Models v2'] },
+  { id: 14, title: 'Data Quality Framework', team: 'data', domain: 'analytics', startDate: '2026-03-01', endDate: '2026-04-30', status: 'in-progress', progress: 70, why: 'Inconsistent data quality across sources.', businessCase: 'Reduces data-related incidents by 60%.', dependencies: [] },
+  { id: 17, title: 'Data Lake Consolidation', team: 'data', domain: 'infrastructure', startDate: '2026-01-01', endDate: '2026-03-31', status: 'completed', progress: 100, why: 'Data was scattered across 4 separate storage systems.', businessCase: 'Saved $800K/year in duplicate storage.', dependencies: [] },
+  { id: 18, title: 'Event Replay System', team: 'data', domain: 'infrastructure', startDate: '2026-10-01', endDate: '2026-12-31', status: 'planned', progress: 0, why: 'No way to reprocess historical events on bug.', businessCase: 'Eliminates $300K/year in manual data correction.', dependencies: ['Real-Time Data Pipeline'] },
+  { id: 3, title: 'Live Odds Engine Rewrite', team: 'betting', domain: 'product', startDate: '2026-03-01', endDate: '2026-06-30', status: 'at-risk', progress: 25, why: 'Legacy odds engine cannot support new sports.', businessCase: 'Opens 12 new bet types across 5 sports.', dependencies: ['Real-Time Data Pipeline', 'API Gateway v3'] },
+  { id: 9, title: 'Responsible Gaming Tools', team: 'betting', domain: 'compliance', startDate: '2026-02-01', endDate: '2026-04-30', status: 'in-progress', progress: 55, why: 'New regulations in 6 key markets.', businessCase: 'Required for license renewals in UK, Germany, Sweden.', dependencies: [] },
+  { id: 12, title: 'Betting API Marketplace', team: 'betting', domain: 'product', startDate: '2026-08-01', endDate: '2026-11-30', status: 'planned', progress: 0, why: 'Third-party developers want to build on our infrastructure.', businessCase: 'Opens a new $3M revenue stream.', dependencies: ['Live Odds Engine Rewrite', 'API Gateway v3'] },
+  { id: 19, title: 'Multi-Currency Settlement', team: 'betting', domain: 'product', startDate: '2026-01-01', endDate: '2026-02-28', status: 'completed', progress: 100, why: 'Expanding into LATAM and Asia requires local currencies.', businessCase: 'Unlocks 8 new markets with $2.5B TAM.', dependencies: [] },
+  { id: 20, title: 'Fraud Detection Engine', team: 'betting', domain: 'compliance', startDate: '2026-06-01', endDate: '2026-08-31', status: 'planned', progress: 0, why: 'Match-fixing and bonus abuse are increasing.', businessCase: 'Expected to prevent $1.5M/year in fraudulent payouts.', dependencies: ['Responsible Gaming Tools'] },
+  { id: 21, title: 'Cash-Out Feature v2', team: 'betting', domain: 'product', startDate: '2026-10-01', endDate: '2026-12-31', status: 'planned', progress: 0, why: 'Top-requested features from operators.', businessCase: 'Increases operator margin by 3%.', dependencies: ['Live Odds Engine Rewrite'] },
+  { id: 4, title: 'Fan Dashboard 2.0', team: 'fan', domain: 'product', startDate: '2026-01-01', endDate: '2026-02-28', status: 'completed', progress: 100, why: '68% of fans wanted personalized stats.', businessCase: 'Increased daily active users by 42%.', dependencies: [] },
+  { id: 8, title: 'In-Play Widgets SDK', team: 'fan', domain: 'product', startDate: '2026-04-01', endDate: '2026-07-31', status: 'planned', progress: 0, why: 'Clients want to embed live visualizations.', businessCase: 'Targets 50 new client integrations.', dependencies: ['Fan Dashboard 2.0'] },
+  { id: 11, title: 'Social Features & Leaderboards', team: 'fan', domain: 'product', startDate: '2026-08-01', endDate: '2026-10-31', status: 'planned', progress: 0, why: 'Community and competition drive retention.', businessCase: 'Projected 30% increase in user retention.', dependencies: ['Fan Dashboard 2.0', 'In-Play Widgets SDK'] },
+  { id: 22, title: 'Push Notification Engine', team: 'fan', domain: 'infrastructure', startDate: '2026-02-01', endDate: '2026-04-30', status: 'in-progress', progress: 60, why: 'Current notifications are batch-sent and generic.', businessCase: 'Increases app open rate by 35%.', dependencies: [] },
+  { id: 23, title: 'Streaming Integration Layer', team: 'fan', domain: 'product', startDate: '2026-05-01', endDate: '2026-07-31', status: 'planned', progress: 0, why: 'Fans want to watch and track stats in one place.', businessCase: 'Partnership deals worth $1.8M.', dependencies: ['Fan Dashboard 2.0'] },
+  { id: 24, title: 'Fan Loyalty Program', team: 'fan', domain: 'product', startDate: '2026-11-01', endDate: '2026-12-31', status: 'planned', progress: 0, why: 'No structured incentive for year-round engagement.', businessCase: 'Projected to increase annual retention by 22%.', dependencies: ['Social Features & Leaderboards'] }
+];
+
+// ============ LOCALSTORAGE ============
+function loadFromStorage(key, defaults) {
+  const stored = localStorage.getItem(key);
+  if (stored) {
+    try {
+      let data = JSON.parse(stored);
+      // Migrate items from old month-based format
+      if (key === 'roadmap_items' && Array.isArray(data) && data.length > 0 && 'startMonth' in data[0]) {
+        data = data.map(item => {
+          const sd = new Date(2026, item.startMonth, 1);
+          const ed = new Date(2026, item.endMonth, 0);
+          const m = { ...item };
+          m.startDate = sd.getFullYear()+'-'+String(sd.getMonth()+1).padStart(2,'0')+'-'+String(sd.getDate()).padStart(2,'0');
+          m.endDate = ed.getFullYear()+'-'+String(ed.getMonth()+1).padStart(2,'0')+'-'+String(ed.getDate()).padStart(2,'0');
+          delete m.startMonth; delete m.endMonth;
+          return m;
+        });
+        localStorage.setItem(key, JSON.stringify(data));
+      }
+      return data;
+    } catch(e) { /* fall through */ }
+  }
+  localStorage.setItem(key, JSON.stringify(defaults));
+  return JSON.parse(JSON.stringify(defaults));
+}
+
+function saveToStorage(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+let TEAMS = loadFromStorage('roadmap_teams', DEFAULT_TEAMS);
+let DOMAINS = loadFromStorage('roadmap_domains', DEFAULT_DOMAINS);
+let items = loadFromStorage('roadmap_items', DEFAULT_ITEMS);
+
+// ============ STATE ============
+let sortField = 'title';
+let sortAsc = true;
+let editingItemId = null;
+let editingTeamKey = null;
+let editingDomainKey = null;
+let deleteAction = null; // { type: 'item'|'team'|'domain', key: ... }
+
+// ============ HELPERS ============
+function escHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function slugify(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getItemCountForTeam(teamKey) {
+  return items.filter(i => i.team === teamKey).length;
+}
+
+function getItemCountForDomain(domainKey) {
+  return items.filter(i => i.domain === domainKey).length;
+}
+
+// ============ TABS ============
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tab));
+  if (tab === 'teams') renderTeamsList();
+  if (tab === 'domains') renderDomainsList();
+  if (tab === 'items') renderItemsTable();
+}
+
+// ============ INIT ============
+function init() {
+  populateItemDropdowns();
+  renderItemsTable();
+}
+
+function populateItemDropdowns() {
+  const teamSel = document.getElementById('fTeam');
+  const domainSel = document.getElementById('fDomain');
+
+  teamSel.innerHTML = '';
+  for (const [key, t] of Object.entries(TEAMS)) {
+    teamSel.innerHTML += `<option value="${key}">${escHtml(t.name)}</option>`;
+  }
+
+  domainSel.innerHTML = '';
+  for (const [key, d] of Object.entries(DOMAINS)) {
+    domainSel.innerHTML += `<option value="${key}">${escHtml(d.name)}</option>`;
+  }
+}
+
+// ============ ITEMS TABLE ============
+function renderItemsTable() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  let filtered = items;
+  if (query) {
+    filtered = items.filter(item =>
+      item.title.toLowerCase().includes(query) ||
+      (TEAMS[item.team] && TEAMS[item.team].name.toLowerCase().includes(query)) ||
+      (DOMAINS[item.domain] && DOMAINS[item.domain].name.toLowerCase().includes(query)) ||
+      item.status.toLowerCase().includes(query)
+    );
+  }
+
+  filtered.sort((a, b) => {
+    let va = a[sortField];
+    let vb = b[sortField];
+    if (sortField === 'team') { va = TEAMS[va] ? TEAMS[va].name : va; vb = TEAMS[vb] ? TEAMS[vb].name : vb; }
+    if (sortField === 'domain') { va = DOMAINS[va] ? DOMAINS[va].name : va; vb = DOMAINS[vb] ? DOMAINS[vb].name : vb; }
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  document.querySelectorAll('thead th').forEach(th => {
+    th.classList.remove('sorted');
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = '';
+  });
+  const sortTh = document.getElementById('th-' + sortField);
+  if (sortTh) {
+    sortTh.classList.add('sorted');
+    const arrow = sortTh.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = sortAsc ? '\u25B2' : '\u25BC';
+  }
+
+  document.getElementById('itemCount').textContent = `${filtered.length} item${filtered.length !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('tableBody');
+  const emptyState = document.getElementById('emptyState');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    emptyState.style.display = '';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(item => {
+    const team = TEAMS[item.team] || { name: item.team, color: '#888' };
+    const domain = DOMAINS[item.domain] || { name: item.domain, color: '#888' };
+    const statusColor = item.status === 'completed' ? 'var(--green)' : item.status === 'in-progress' ? 'var(--accent)' : item.status === 'at-risk' ? 'var(--amber)' : 'var(--blue-muted)';
+
+    return `<tr>
+      <td class="title-cell">${escHtml(item.title)}</td>
+      <td><span class="team-badge" style="color:${team.color}">${escHtml(team.name)}</span></td>
+      <td><span class="team-badge" style="color:${domain.color}">${escHtml(domain.name)}</span></td>
+      <td><span class="status-badge ${item.status}">${item.status.replace('-', ' ')}</span></td>
+      <td>
+        <div class="progress-mini">
+          <div class="progress-mini-bar"><div class="progress-mini-fill" style="width:${item.progress}%;background:${statusColor}"></div></div>
+          <span class="progress-mini-text">${item.progress}%</span>
+        </div>
+      </td>
+      <td>${formatDate(item.startDate)}</td>
+      <td>${formatDate(item.endDate)}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-icon" onclick="openItemModal(${item.id})" title="Edit">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="btn-icon delete" onclick="deleteItem(${item.id})" title="Delete">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M6 7v5M10 7v5M4 4l1 9a1 1 0 001 1h4a1 1 0 001-1l1-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function sortBy(field) {
+  if (sortField === field) { sortAsc = !sortAsc; } else { sortField = field; sortAsc = true; }
+  renderItemsTable();
+}
+
+// ============ ITEM MODAL ============
+function openItemModal(id) {
+  editingItemId = id || null;
+  document.getElementById('itemModalTitle').textContent = editingItemId ? 'Edit Item' : 'New Item';
+  document.querySelectorAll('.form-error').forEach(e => e.classList.remove('show'));
+  populateItemDropdowns();
+
+  if (editingItemId) {
+    const item = items.find(i => i.id === editingItemId);
+    if (!item) return;
+    document.getElementById('fTitle').value = item.title;
+    document.getElementById('fTeam').value = item.team;
+    document.getElementById('fDomain').value = item.domain;
+    document.getElementById('fStart').value = item.startDate;
+    document.getElementById('fEnd').value = item.endDate;
+    document.getElementById('fStatus').value = item.status;
+    document.getElementById('fProgress').value = item.progress;
+    document.getElementById('progressVal').textContent = item.progress + '%';
+    document.getElementById('fWhy').value = item.why || '';
+    document.getElementById('fBusiness').value = item.businessCase || '';
+    document.getElementById('fDeps').value = (item.dependencies || []).join(', ');
+  } else {
+    document.getElementById('fTitle').value = '';
+    document.getElementById('fTeam').value = Object.keys(TEAMS)[0] || '';
+    document.getElementById('fDomain').value = Object.keys(DOMAINS)[0] || '';
+    document.getElementById('fStart').value = '2026-01-01';
+    document.getElementById('fEnd').value = '2026-03-31';
+    document.getElementById('fStatus').value = 'planned';
+    document.getElementById('fProgress').value = 0;
+    document.getElementById('progressVal').textContent = '0%';
+    document.getElementById('fWhy').value = '';
+    document.getElementById('fBusiness').value = '';
+    document.getElementById('fDeps').value = '';
+  }
+
+  document.getElementById('itemModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('fTitle').focus(), 100);
+}
+
+function closeItemModal() {
+  document.getElementById('itemModalOverlay').classList.remove('open');
+  editingItemId = null;
+}
+
+function saveItem() {
+  const title = document.getElementById('fTitle').value.trim();
+  const team = document.getElementById('fTeam').value;
+  const domain = document.getElementById('fDomain').value;
+  const startDate = document.getElementById('fStart').value;
+  const endDate = document.getElementById('fEnd').value;
+  const status = document.getElementById('fStatus').value;
+  const progress = parseInt(document.getElementById('fProgress').value);
+  const why = document.getElementById('fWhy').value.trim();
+  const businessCase = document.getElementById('fBusiness').value.trim();
+  const depsStr = document.getElementById('fDeps').value.trim();
+  const dependencies = depsStr ? depsStr.split(',').map(d => d.trim()).filter(d => d) : [];
+
+  let valid = true;
+  if (!title) { document.getElementById('errTitle').classList.add('show'); valid = false; }
+  else { document.getElementById('errTitle').classList.remove('show'); }
+
+  if (!startDate || !endDate || endDate <= startDate) { document.getElementById('errEnd').classList.add('show'); valid = false; }
+  else { document.getElementById('errEnd').classList.remove('show'); }
+
+  if (!valid) return;
+
+  if (editingItemId) {
+    const idx = items.findIndex(i => i.id === editingItemId);
+    if (idx !== -1) {
+      items[idx] = { ...items[idx], title, team, domain, startDate, endDate, status, progress, why, businessCase, dependencies };
+    }
+  } else {
+    const maxId = items.reduce((max, i) => Math.max(max, i.id), 0);
+    items.push({ id: maxId + 1, title, team, domain, startDate, endDate, status, progress, why, businessCase, dependencies });
+  }
+
+  saveToStorage('roadmap_items', items);
+  closeItemModal();
+  renderItemsTable();
+}
+
+function deleteItem(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  deleteAction = { type: 'item', key: id };
+  document.getElementById('confirmTitle').textContent = 'Delete Item';
+  document.getElementById('confirmText').textContent = `Are you sure you want to delete "${item.title}"? This cannot be undone.`;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+// ============ TEAMS LIST ============
+function renderTeamsList() {
+  const entries = Object.entries(TEAMS);
+  document.getElementById('teamsCount').textContent = `${entries.length} team${entries.length !== 1 ? 's' : ''}`;
+
+  document.getElementById('teamsList').innerHTML = entries.map(([key, team]) => {
+    const count = getItemCountForTeam(key);
+    return `<div class="entity-card">
+      <div class="entity-color" style="background:${team.color}"></div>
+      <span class="entity-name">${escHtml(team.name)}</span>
+      <span class="entity-key">${key}</span>
+      <span class="entity-count">${count} item${count !== 1 ? 's' : ''}</span>
+      <div class="action-btns">
+        <button class="btn-icon" onclick="openTeamModal('${key}')" title="Edit">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="btn-icon delete" onclick="deleteTeam('${key}')" title="Delete">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M6 7v5M10 7v5M4 4l1 9a1 1 0 001 1h4a1 1 0 001-1l1-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openTeamModal(key) {
+  editingTeamKey = key || null;
+  document.getElementById('teamModalTitle').textContent = editingTeamKey ? 'Edit Team' : 'New Team';
+  document.getElementById('errTeamName').classList.remove('show');
+
+  if (editingTeamKey && TEAMS[editingTeamKey]) {
+    document.getElementById('fTeamName').value = TEAMS[editingTeamKey].name;
+    document.getElementById('fTeamColor').value = TEAMS[editingTeamKey].color;
+  } else {
+    document.getElementById('fTeamName').value = '';
+    document.getElementById('fTeamColor').value = '#6366f1';
+  }
+
+  document.getElementById('teamModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('fTeamName').focus(), 100);
+}
+
+function closeTeamModal() {
+  document.getElementById('teamModalOverlay').classList.remove('open');
+  editingTeamKey = null;
+}
+
+function saveTeam() {
+  const name = document.getElementById('fTeamName').value.trim();
+  const color = document.getElementById('fTeamColor').value;
+
+  if (!name) { document.getElementById('errTeamName').classList.add('show'); return; }
+  document.getElementById('errTeamName').classList.remove('show');
+
+  if (editingTeamKey) {
+    // Update existing team
+    TEAMS[editingTeamKey] = { name, color };
+  } else {
+    // Create new team
+    let key = slugify(name);
+    // Ensure unique key
+    let suffix = 1;
+    let origKey = key;
+    while (TEAMS[key]) { key = origKey + '-' + suffix; suffix++; }
+    TEAMS[key] = { name, color };
+  }
+
+  saveToStorage('roadmap_teams', TEAMS);
+  closeTeamModal();
+  renderTeamsList();
+  populateItemDropdowns();
+}
+
+function deleteTeam(key) {
+  const team = TEAMS[key];
+  if (!team) return;
+  const count = getItemCountForTeam(key);
+  if (count > 0) {
+    deleteAction = null;
+    document.getElementById('confirmTitle').textContent = 'Cannot Delete Team';
+    document.getElementById('confirmText').textContent = `"${team.name}" has ${count} roadmap item${count !== 1 ? 's' : ''} assigned. Remove or reassign those items first.`;
+    document.getElementById('confirmOverlay').classList.add('open');
+    // Hide delete button, show only cancel
+    document.querySelector('.btn-delete-confirm').style.display = 'none';
+    return;
+  }
+  deleteAction = { type: 'team', key };
+  document.getElementById('confirmTitle').textContent = 'Delete Team';
+  document.getElementById('confirmText').textContent = `Are you sure you want to delete "${team.name}"? This cannot be undone.`;
+  document.querySelector('.btn-delete-confirm').style.display = '';
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+// ============ DOMAINS LIST ============
+function renderDomainsList() {
+  const entries = Object.entries(DOMAINS);
+  document.getElementById('domainsCount').textContent = `${entries.length} domain${entries.length !== 1 ? 's' : ''}`;
+
+  document.getElementById('domainsList').innerHTML = entries.map(([key, domain]) => {
+    const count = getItemCountForDomain(key);
+    return `<div class="entity-card">
+      <div class="entity-color" style="background:${domain.color}"></div>
+      <span class="entity-name">${escHtml(domain.name)}</span>
+      <span class="entity-key">${key}</span>
+      <span class="entity-count">${count} item${count !== 1 ? 's' : ''}</span>
+      <div class="action-btns">
+        <button class="btn-icon" onclick="openDomainModal('${key}')" title="Edit">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="btn-icon delete" onclick="deleteDomain('${key}')" title="Delete">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M6 7v5M10 7v5M4 4l1 9a1 1 0 001 1h4a1 1 0 001-1l1-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDomainModal(key) {
+  editingDomainKey = key || null;
+  document.getElementById('domainModalTitle').textContent = editingDomainKey ? 'Edit Domain' : 'New Domain';
+  document.getElementById('errDomainName').classList.remove('show');
+
+  if (editingDomainKey && DOMAINS[editingDomainKey]) {
+    document.getElementById('fDomainName').value = DOMAINS[editingDomainKey].name;
+    document.getElementById('fDomainColor').value = DOMAINS[editingDomainKey].color;
+  } else {
+    document.getElementById('fDomainName').value = '';
+    document.getElementById('fDomainColor').value = '#06b6d4';
+  }
+
+  document.getElementById('domainModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('fDomainName').focus(), 100);
+}
+
+function closeDomainModal() {
+  document.getElementById('domainModalOverlay').classList.remove('open');
+  editingDomainKey = null;
+}
+
+function saveDomain() {
+  const name = document.getElementById('fDomainName').value.trim();
+  const color = document.getElementById('fDomainColor').value;
+
+  if (!name) { document.getElementById('errDomainName').classList.add('show'); return; }
+  document.getElementById('errDomainName').classList.remove('show');
+
+  if (editingDomainKey) {
+    DOMAINS[editingDomainKey] = { name, color };
+  } else {
+    let key = slugify(name);
+    let suffix = 1;
+    let origKey = key;
+    while (DOMAINS[key]) { key = origKey + '-' + suffix; suffix++; }
+    DOMAINS[key] = { name, color };
+  }
+
+  saveToStorage('roadmap_domains', DOMAINS);
+  closeDomainModal();
+  renderDomainsList();
+  populateItemDropdowns();
+}
+
+function deleteDomain(key) {
+  const domain = DOMAINS[key];
+  if (!domain) return;
+  const count = getItemCountForDomain(key);
+  if (count > 0) {
+    deleteAction = null;
+    document.getElementById('confirmTitle').textContent = 'Cannot Delete Domain';
+    document.getElementById('confirmText').textContent = `"${domain.name}" has ${count} roadmap item${count !== 1 ? 's' : ''} assigned. Remove or reassign those items first.`;
+    document.getElementById('confirmOverlay').classList.add('open');
+    document.querySelector('.btn-delete-confirm').style.display = 'none';
+    return;
+  }
+  deleteAction = { type: 'domain', key };
+  document.getElementById('confirmTitle').textContent = 'Delete Domain';
+  document.getElementById('confirmText').textContent = `Are you sure you want to delete "${domain.name}"? This cannot be undone.`;
+  document.querySelector('.btn-delete-confirm').style.display = '';
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+// ============ DELETE CONFIRM ============
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('open');
+  document.querySelector('.btn-delete-confirm').style.display = '';
+  deleteAction = null;
+}
+
+function confirmDeleteAction() {
+  if (!deleteAction) { closeConfirm(); return; }
+
+  if (deleteAction.type === 'item') {
+    items = items.filter(i => i.id !== deleteAction.key);
+    saveToStorage('roadmap_items', items);
+    renderItemsTable();
+  } else if (deleteAction.type === 'team') {
+    delete TEAMS[deleteAction.key];
+    saveToStorage('roadmap_teams', TEAMS);
+    renderTeamsList();
+    populateItemDropdowns();
+  } else if (deleteAction.type === 'domain') {
+    delete DOMAINS[deleteAction.key];
+    saveToStorage('roadmap_domains', DOMAINS);
+    renderDomainsList();
+    populateItemDropdowns();
+  }
+
+  closeConfirm();
+}
+
+// ============ KEYBOARD ============
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('confirmOverlay').classList.contains('open')) closeConfirm();
+    else if (document.getElementById('itemModalOverlay').classList.contains('open')) closeItemModal();
+    else if (document.getElementById('teamModalOverlay').classList.contains('open')) closeTeamModal();
+    else if (document.getElementById('domainModalOverlay').classList.contains('open')) closeDomainModal();
+  }
+});
+
+// ============ START ============
+init();
+</script>
+</body>
+</html>

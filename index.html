@@ -175,11 +175,13 @@
   .lane-labels {
     flex-shrink: 0;
     width: 200px;
+    min-width: 200px;
     position: sticky;
     left: 0;
     z-index: 50;
     background: #1b1b83;
     border-right: 1px solid var(--border);
+    align-self: stretch;
   }
 
   .lane-labels-header {
@@ -193,6 +195,10 @@
     letter-spacing: 1.5px;
     color: var(--text-muted);
     font-weight: 600;
+    background: #1b1b83;
+    position: sticky;
+    top: 0;
+    z-index: 55;
   }
 
   .lane-label {
@@ -202,6 +208,7 @@
     border-bottom: 1px solid var(--border);
     font-weight: 600;
     font-size: 14px;
+    background: #1b1b83;
   }
 
   .lane-label-text {
@@ -219,8 +226,9 @@
   /* ---- Timeline Grid ---- */
   .timeline-grid {
     flex: 1;
-    min-width: 0;
+    min-width: calc(var(--month-width) * 12);
     position: relative;
+    background: var(--bg-primary);
   }
 
   .months-header {
@@ -231,6 +239,7 @@
     top: 0;
     background: #1b1b83;
     z-index: 40;
+    width: calc(var(--month-width) * 12);
   }
 
   .month-header {
@@ -264,6 +273,7 @@
     flex-direction: column;
     justify-content: center;
     padding: 14px 0;
+    background: var(--bg-primary);
   }
 
   .swim-lane.lane-tinted {
@@ -549,7 +559,7 @@
     align-items: center;
   }
 
-  .total-width-sizer { display: block; }
+  .total-width-sizer { display: block; background: var(--bg-primary); }
 
   @media (max-width: 768px) {
     .header { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
@@ -565,24 +575,30 @@
 <body>
 
 <header class="header">
-  <div class="controls">
-    <div class="toggle-group">
-      <span class="toggle-label">Group by</span>
-      <div class="toggle-buttons">
-        <button class="toggle-btn active" data-group="team" onclick="setGrouping('team')">Team</button>
-        <button class="toggle-btn" data-group="domain" onclick="setGrouping('domain')">Domain</button>
+  <div class="controls" style="width:100%;justify-content:space-between;">
+    <a href="admin.html" class="export-btn" style="text-decoration:none;">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v4M6 4h4M3 7h10a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Manage Items
+    </a>
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div class="toggle-group">
+        <span class="toggle-label">Group by</span>
+        <div class="toggle-buttons">
+          <button class="toggle-btn active" data-group="team" onclick="setGrouping('team')">Team</button>
+          <button class="toggle-btn" data-group="domain" onclick="setGrouping('domain')">Domain</button>
+        </div>
       </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--blue-muted)"></div>Planned</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>In Progress</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>At Risk</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Completed</div>
+      </div>
+      <button class="export-btn" onclick="exportToPptx()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1v10M4 7l4 4 4-4M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Export PPTX
+      </button>
     </div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--blue-muted)"></div>Planned</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>In Progress</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>At Risk</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Completed</div>
-    </div>
-    <button class="export-btn" onclick="exportToPptx()">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1v10M4 7l4 4 4-4M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Export PPTX
-    </button>
   </div>
 </header>
 
@@ -617,218 +633,110 @@ const MONTHS = [
   { name: 'Oct', quarter: 'Q4' }, { name: 'Nov', quarter: 'Q4' }, { name: 'Dec', quarter: 'Q4' }
 ];
 
-const TEAMS = {
+const DEFAULT_TEAMS = {
   platform: { name: 'Platform', color: '#6366f1' },
   data: { name: 'Data Engineering', color: '#06b6d4' },
   betting: { name: 'Betting Products', color: '#f59e0b' },
   fan: { name: 'Fan Engagement', color: '#ec4899' }
 };
 
-const DOMAINS = {
+const DEFAULT_DOMAINS = {
   infrastructure: { name: 'Infrastructure', color: '#6366f1' },
   analytics: { name: 'Analytics', color: '#06b6d4' },
   product: { name: 'Product', color: '#f59e0b' },
   compliance: { name: 'Compliance', color: '#10b981' }
 };
 
-const ITEMS = [
+const DEFAULT_ITEMS = [
   // ---- Platform (6 items) ----
-  {
-    id: 1, title: 'API Gateway v3',
-    team: 'platform', domain: 'infrastructure',
-    startMonth: 0, endMonth: 3, status: 'in-progress', progress: 65,
-    why: 'Our current API gateway is hitting scalability limits at peak traffic. v3 introduces rate limiting, improved caching, and horizontal auto-scaling to handle 10x current load.',
-    businessCase: 'Reduces infrastructure costs by 30% through intelligent routing. Eliminates 99th percentile latency spikes that currently affect live betting products during major sporting events.',
-    dependencies: ['Cloud Migration']
-  },
-  {
-    id: 5, title: 'GDPR Compliance Audit',
-    team: 'platform', domain: 'compliance',
-    startMonth: 3, endMonth: 5, status: 'planned', progress: 0,
-    why: 'Regulatory landscape is evolving and our last full audit was 18 months ago. Proactive compliance reduces legal risk and builds trust with enterprise clients.',
-    businessCase: 'Avoids potential fines up to €20M. Required for enterprise contract renewals worth $8M annually. Strengthens competitive position in regulated European markets.',
-    dependencies: []
-  },
-  {
-    id: 7, title: 'Cloud Migration (Phase 2)',
-    team: 'platform', domain: 'infrastructure',
-    startMonth: 5, endMonth: 9, status: 'planned', progress: 0,
-    why: 'Phase 1 moved stateless services to the cloud. Phase 2 migrates stateful workloads including databases and message queues, completing our hybrid-to-cloud transition.',
-    businessCase: 'Eliminates $1.2M/year in on-premise hardware costs. Reduces deployment time from 4 hours to 15 minutes. Enables multi-region failover for 99.99% uptime SLA.',
-    dependencies: ['API Gateway v3']
-  },
-  {
-    id: 13, title: 'Performance Monitoring Suite',
-    team: 'platform', domain: 'infrastructure',
-    startMonth: 8, endMonth: 11, status: 'planned', progress: 0,
-    why: 'As our system grows, we need unified observability across all services. Custom monitoring with SLA-aware alerting ensures we catch issues before clients do.',
-    businessCase: 'Reduces mean time to detection by 70%. Projected to prevent 15 major incidents per year, each costing an average of $50K in SLA credits and engineering time.',
-    dependencies: ['Cloud Migration (Phase 2)']
-  },
-  {
-    id: 15, title: 'Service Mesh Rollout',
-    team: 'platform', domain: 'infrastructure',
-    startMonth: 0, endMonth: 4, status: 'in-progress', progress: 50,
-    why: 'Microservice communication is growing complex with 80+ services. A service mesh provides consistent load balancing, mutual TLS, and traffic management without application changes.',
-    businessCase: 'Reduces inter-service latency by 20%. Eliminates 5 hours/week of manual traffic routing. Enables canary deployments that cut rollback incidents by 40%.',
-    dependencies: []
-  },
-  {
-    id: 16, title: 'Zero-Trust Security Model',
-    team: 'platform', domain: 'compliance',
-    startMonth: 9, endMonth: 12, status: 'planned', progress: 0,
-    why: 'Perimeter-based security is no longer sufficient as we move to cloud and support remote teams. Zero-trust ensures every request is authenticated and authorized regardless of origin.',
-    businessCase: 'Required by 3 enterprise clients representing $5M ARR. Reduces attack surface significantly and meets SOC 2 Type II requirements for next audit cycle.',
-    dependencies: ['Cloud Migration (Phase 2)']
-  },
+  { id: 1, title: 'API Gateway v3', team: 'platform', domain: 'infrastructure', startDate: '2026-01-01', endDate: '2026-03-31', status: 'in-progress', progress: 65, why: 'Our current API gateway is hitting scalability limits at peak traffic. v3 introduces rate limiting, improved caching, and horizontal auto-scaling to handle 10x current load.', businessCase: 'Reduces infrastructure costs by 30% through intelligent routing. Eliminates 99th percentile latency spikes that currently affect live betting products during major sporting events.', dependencies: ['Cloud Migration'] },
+  { id: 5, title: 'GDPR Compliance Audit', team: 'platform', domain: 'compliance', startDate: '2026-04-01', endDate: '2026-05-31', status: 'planned', progress: 0, why: 'Regulatory landscape is evolving and our last full audit was 18 months ago. Proactive compliance reduces legal risk and builds trust with enterprise clients.', businessCase: 'Avoids potential fines up to \u20ac20M. Required for enterprise contract renewals worth $8M annually. Strengthens competitive position in regulated European markets.', dependencies: [] },
+  { id: 7, title: 'Cloud Migration (Phase 2)', team: 'platform', domain: 'infrastructure', startDate: '2026-06-01', endDate: '2026-09-30', status: 'planned', progress: 0, why: 'Phase 1 moved stateless services to the cloud. Phase 2 migrates stateful workloads including databases and message queues, completing our hybrid-to-cloud transition.', businessCase: 'Eliminates $1.2M/year in on-premise hardware costs. Reduces deployment time from 4 hours to 15 minutes. Enables multi-region failover for 99.99% uptime SLA.', dependencies: ['API Gateway v3'] },
+  { id: 13, title: 'Performance Monitoring Suite', team: 'platform', domain: 'infrastructure', startDate: '2026-09-01', endDate: '2026-11-30', status: 'planned', progress: 0, why: 'As our system grows, we need unified observability across all services. Custom monitoring with SLA-aware alerting ensures we catch issues before clients do.', businessCase: 'Reduces mean time to detection by 70%. Projected to prevent 15 major incidents per year, each costing an average of $50K in SLA credits and engineering time.', dependencies: ['Cloud Migration (Phase 2)'] },
+  { id: 15, title: 'Service Mesh Rollout', team: 'platform', domain: 'infrastructure', startDate: '2026-01-01', endDate: '2026-04-30', status: 'in-progress', progress: 50, why: 'Microservice communication is growing complex with 80+ services. A service mesh provides consistent load balancing, mutual TLS, and traffic management without application changes.', businessCase: 'Reduces inter-service latency by 20%. Eliminates 5 hours/week of manual traffic routing. Enables canary deployments that cut rollback incidents by 40%.', dependencies: [] },
+  { id: 16, title: 'Zero-Trust Security Model', team: 'platform', domain: 'compliance', startDate: '2026-10-01', endDate: '2026-12-31', status: 'planned', progress: 0, why: 'Perimeter-based security is no longer sufficient as we move to cloud and support remote teams. Zero-trust ensures every request is authenticated and authorized regardless of origin.', businessCase: 'Required by 3 enterprise clients representing $5M ARR. Reduces attack surface significantly and meets SOC 2 Type II requirements for next audit cycle.', dependencies: ['Cloud Migration (Phase 2)'] },
   // ---- Data Engineering (6 items) ----
-  {
-    id: 2, title: 'Real-Time Data Pipeline',
-    team: 'data', domain: 'infrastructure',
-    startMonth: 1, endMonth: 5, status: 'in-progress', progress: 40,
-    why: 'Moving from batch processing to real-time streaming enables sub-second data delivery to downstream consumers. Critical for live odds calculation and in-play statistics.',
-    businessCase: 'Enables real-time product features worth an estimated $4M ARR. Reduces data latency from 15 minutes to under 1 second for 85% of data flows.',
-    dependencies: ['API Gateway v3']
-  },
-  {
-    id: 6, title: 'ML Prediction Models v2',
-    team: 'data', domain: 'analytics',
-    startMonth: 4, endMonth: 8, status: 'planned', progress: 0,
-    why: 'Current models underperform on low-data sports and niche leagues. v2 introduces transfer learning and improved feature engineering for better coverage and accuracy.',
-    businessCase: 'Improves prediction accuracy by 15% across all sports. Enables expansion into 20+ new leagues, adding an estimated $2.1M in licensing revenue.',
-    dependencies: ['Real-Time Data Pipeline']
-  },
-  {
-    id: 10, title: 'Advanced Analytics Dashboard',
-    team: 'data', domain: 'analytics',
-    startMonth: 6, endMonth: 10, status: 'planned', progress: 0,
-    why: 'Clients lack visibility into how our data products perform for them. A self-service analytics dashboard gives them insights into usage, accuracy, and ROI.',
-    businessCase: 'Reduces support tickets by 35% through self-service insights. Expected to improve client retention by 12% and serve as an upsell vector for premium data packages.',
-    dependencies: ['ML Prediction Models v2']
-  },
-  {
-    id: 14, title: 'Data Quality Framework',
-    team: 'data', domain: 'analytics',
-    startMonth: 2, endMonth: 4, status: 'in-progress', progress: 70,
-    why: 'Inconsistent data quality across sources leads to downstream errors in odds and statistics. A centralized framework with automated validation catches issues at ingestion.',
-    businessCase: 'Reduces data-related incidents by 60%. Saves 20 engineering hours per week currently spent on manual data fixes. Improves client trust scores by ensuring 99.5% data accuracy.',
-    dependencies: []
-  },
-  {
-    id: 17, title: 'Data Lake Consolidation',
-    team: 'data', domain: 'infrastructure',
-    startMonth: 0, endMonth: 3, status: 'completed', progress: 100,
-    why: 'Data was scattered across 4 separate storage systems making cross-domain queries impossible. Consolidation into a unified lake enables holistic analytics and reduces storage costs.',
-    businessCase: 'Saved $800K/year in duplicate storage. Enabled 3 new cross-sport analytics products. Reduced query times from hours to minutes for business intelligence teams.',
-    dependencies: []
-  },
-  {
-    id: 18, title: 'Event Replay System',
-    team: 'data', domain: 'infrastructure',
-    startMonth: 9, endMonth: 12, status: 'planned', progress: 0,
-    why: 'When data pipeline bugs occur, there is no way to reprocess historical events. An event replay system allows us to fix issues retroactively and backfill corrected data.',
-    businessCase: 'Eliminates $300K/year in manual data correction. Reduces incident resolution time from days to hours. Critical for maintaining SLA commitments on data accuracy.',
-    dependencies: ['Real-Time Data Pipeline']
-  },
+  { id: 2, title: 'Real-Time Data Pipeline', team: 'data', domain: 'infrastructure', startDate: '2026-02-01', endDate: '2026-05-31', status: 'in-progress', progress: 40, why: 'Moving from batch processing to real-time streaming enables sub-second data delivery to downstream consumers. Critical for live odds calculation and in-play statistics.', businessCase: 'Enables real-time product features worth an estimated $4M ARR. Reduces data latency from 15 minutes to under 1 second for 85% of data flows.', dependencies: ['API Gateway v3'] },
+  { id: 6, title: 'ML Prediction Models v2', team: 'data', domain: 'analytics', startDate: '2026-05-01', endDate: '2026-08-31', status: 'planned', progress: 0, why: 'Current models underperform on low-data sports and niche leagues. v2 introduces transfer learning and improved feature engineering for better coverage and accuracy.', businessCase: 'Improves prediction accuracy by 15% across all sports. Enables expansion into 20+ new leagues, adding an estimated $2.1M in licensing revenue.', dependencies: ['Real-Time Data Pipeline'] },
+  { id: 10, title: 'Advanced Analytics Dashboard', team: 'data', domain: 'analytics', startDate: '2026-07-01', endDate: '2026-10-31', status: 'planned', progress: 0, why: 'Clients lack visibility into how our data products perform for them. A self-service analytics dashboard gives them insights into usage, accuracy, and ROI.', businessCase: 'Reduces support tickets by 35% through self-service insights. Expected to improve client retention by 12% and serve as an upsell vector for premium data packages.', dependencies: ['ML Prediction Models v2'] },
+  { id: 14, title: 'Data Quality Framework', team: 'data', domain: 'analytics', startDate: '2026-03-01', endDate: '2026-04-30', status: 'in-progress', progress: 70, why: 'Inconsistent data quality across sources leads to downstream errors in odds and statistics. A centralized framework with automated validation catches issues at ingestion.', businessCase: 'Reduces data-related incidents by 60%. Saves 20 engineering hours per week currently spent on manual data fixes. Improves client trust scores by ensuring 99.5% data accuracy.', dependencies: [] },
+  { id: 17, title: 'Data Lake Consolidation', team: 'data', domain: 'infrastructure', startDate: '2026-01-01', endDate: '2026-03-31', status: 'completed', progress: 100, why: 'Data was scattered across 4 separate storage systems making cross-domain queries impossible. Consolidation into a unified lake enables holistic analytics and reduces storage costs.', businessCase: 'Saved $800K/year in duplicate storage. Enabled 3 new cross-sport analytics products. Reduced query times from hours to minutes for business intelligence teams.', dependencies: [] },
+  { id: 18, title: 'Event Replay System', team: 'data', domain: 'infrastructure', startDate: '2026-10-01', endDate: '2026-12-31', status: 'planned', progress: 0, why: 'When data pipeline bugs occur, there is no way to reprocess historical events. An event replay system allows us to fix issues retroactively and backfill corrected data.', businessCase: 'Eliminates $300K/year in manual data correction. Reduces incident resolution time from days to hours. Critical for maintaining SLA commitments on data accuracy.', dependencies: ['Real-Time Data Pipeline'] },
   // ---- Betting Products (6 items) ----
-  {
-    id: 3, title: 'Live Odds Engine Rewrite',
-    team: 'betting', domain: 'product',
-    startMonth: 2, endMonth: 6, status: 'at-risk', progress: 25,
-    why: 'The legacy odds engine cannot support the new sports and bet types our clients are requesting. A ground-up rewrite using event-driven architecture will unlock rapid iteration.',
-    businessCase: 'Opens 12 new bet types across 5 sports verticals. Projected revenue increase of $6.2M in the first year through expanded market coverage.',
-    dependencies: ['Real-Time Data Pipeline', 'API Gateway v3']
-  },
-  {
-    id: 9, title: 'Responsible Gaming Tools',
-    team: 'betting', domain: 'compliance',
-    startMonth: 1, endMonth: 4, status: 'in-progress', progress: 55,
-    why: 'New regulations in 6 key markets require real-time player behavior monitoring and automated intervention tools. This is both a legal requirement and the right thing to do.',
-    businessCase: 'Required for license renewals in UK, Germany, and Sweden — markets representing $12M ARR. Reduces regulatory risk and positions us as an industry leader in player protection.',
-    dependencies: []
-  },
-  {
-    id: 12, title: 'Betting API Marketplace',
-    team: 'betting', domain: 'product',
-    startMonth: 7, endMonth: 11, status: 'planned', progress: 0,
-    why: 'Third-party developers want to build on our odds and data infrastructure. A marketplace with documentation, sandboxes, and billing creates a platform ecosystem.',
-    businessCase: 'Opens a new $3M revenue stream from API subscriptions. Creates network effects that strengthen our competitive moat and increase switching costs for clients.',
-    dependencies: ['Live Odds Engine Rewrite', 'API Gateway v3']
-  },
-  {
-    id: 19, title: 'Multi-Currency Settlement',
-    team: 'betting', domain: 'product',
-    startMonth: 0, endMonth: 2, status: 'completed', progress: 100,
-    why: 'Expanding into Latin America and Asia requires settlement in local currencies. Current USD-only settlement creates friction and FX risk for international operators.',
-    businessCase: 'Unlocks 8 new markets with combined TAM of $2.5B. Reduces operator FX costs by 15%. Required for 4 pending contracts worth $3.2M ARR.',
-    dependencies: []
-  },
-  {
-    id: 20, title: 'Fraud Detection Engine',
-    team: 'betting', domain: 'compliance',
-    startMonth: 5, endMonth: 8, status: 'planned', progress: 0,
-    why: 'Match-fixing and bonus abuse are increasing across the industry. An ML-powered fraud detection system will identify suspicious patterns in real-time across all bet types.',
-    businessCase: 'Expected to prevent $1.5M/year in fraudulent payouts. Required by 5 regulated jurisdictions. Reduces manual review workload by 60%.',
-    dependencies: ['Responsible Gaming Tools']
-  },
-  {
-    id: 21, title: 'Cash-Out Feature v2',
-    team: 'betting', domain: 'product',
-    startMonth: 9, endMonth: 12, status: 'planned', progress: 0,
-    why: 'Partial cash-out and auto cash-out are the top-requested features from operators. v2 adds granular controls and better pricing algorithms for in-play markets.',
-    businessCase: 'Increases operator margin by 3% on cash-out bets. Projected to drive 25% increase in in-play betting volume. Top competitive gap identified by sales team.',
-    dependencies: ['Live Odds Engine Rewrite']
-  },
+  { id: 3, title: 'Live Odds Engine Rewrite', team: 'betting', domain: 'product', startDate: '2026-03-01', endDate: '2026-06-30', status: 'at-risk', progress: 25, why: 'The legacy odds engine cannot support the new sports and bet types our clients are requesting. A ground-up rewrite using event-driven architecture will unlock rapid iteration.', businessCase: 'Opens 12 new bet types across 5 sports verticals. Projected revenue increase of $6.2M in the first year through expanded market coverage.', dependencies: ['Real-Time Data Pipeline', 'API Gateway v3'] },
+  { id: 9, title: 'Responsible Gaming Tools', team: 'betting', domain: 'compliance', startDate: '2026-02-01', endDate: '2026-04-30', status: 'in-progress', progress: 55, why: 'New regulations in 6 key markets require real-time player behavior monitoring and automated intervention tools. This is both a legal requirement and the right thing to do.', businessCase: 'Required for license renewals in UK, Germany, and Sweden \u2014 markets representing $12M ARR. Reduces regulatory risk and positions us as an industry leader in player protection.', dependencies: [] },
+  { id: 12, title: 'Betting API Marketplace', team: 'betting', domain: 'product', startDate: '2026-08-01', endDate: '2026-11-30', status: 'planned', progress: 0, why: 'Third-party developers want to build on our odds and data infrastructure. A marketplace with documentation, sandboxes, and billing creates a platform ecosystem.', businessCase: 'Opens a new $3M revenue stream from API subscriptions. Creates network effects that strengthen our competitive moat and increase switching costs for clients.', dependencies: ['Live Odds Engine Rewrite', 'API Gateway v3'] },
+  { id: 19, title: 'Multi-Currency Settlement', team: 'betting', domain: 'product', startDate: '2026-01-01', endDate: '2026-02-28', status: 'completed', progress: 100, why: 'Expanding into Latin America and Asia requires settlement in local currencies. Current USD-only settlement creates friction and FX risk for international operators.', businessCase: 'Unlocks 8 new markets with combined TAM of $2.5B. Reduces operator FX costs by 15%. Required for 4 pending contracts worth $3.2M ARR.', dependencies: [] },
+  { id: 20, title: 'Fraud Detection Engine', team: 'betting', domain: 'compliance', startDate: '2026-06-01', endDate: '2026-08-31', status: 'planned', progress: 0, why: 'Match-fixing and bonus abuse are increasing across the industry. An ML-powered fraud detection system will identify suspicious patterns in real-time across all bet types.', businessCase: 'Expected to prevent $1.5M/year in fraudulent payouts. Required by 5 regulated jurisdictions. Reduces manual review workload by 60%.', dependencies: ['Responsible Gaming Tools'] },
+  { id: 21, title: 'Cash-Out Feature v2', team: 'betting', domain: 'product', startDate: '2026-10-01', endDate: '2026-12-31', status: 'planned', progress: 0, why: 'Partial cash-out and auto cash-out are the top-requested features from operators. v2 adds granular controls and better pricing algorithms for in-play markets.', businessCase: 'Increases operator margin by 3% on cash-out bets. Projected to drive 25% increase in in-play betting volume. Top competitive gap identified by sales team.', dependencies: ['Live Odds Engine Rewrite'] },
   // ---- Fan Engagement (6 items) ----
-  {
-    id: 4, title: 'Fan Dashboard 2.0',
-    team: 'fan', domain: 'product',
-    startMonth: 0, endMonth: 2, status: 'completed', progress: 100,
-    why: 'User research showed 68% of fans wanted personalized stats and predictions. The redesigned dashboard delivers a tailored experience based on favorite teams and players.',
-    businessCase: 'Increased daily active users by 42% in beta testing. Expected to drive 25% improvement in session duration and 18% increase in premium conversions.',
-    dependencies: []
-  },
-  {
-    id: 8, title: 'In-Play Widgets SDK',
-    team: 'fan', domain: 'product',
-    startMonth: 3, endMonth: 7, status: 'planned', progress: 0,
-    why: 'Clients want to embed live match visualizations directly in their apps. A drop-in SDK reduces integration time from weeks to hours and ensures consistent quality.',
-    businessCase: 'Targets 50 new client integrations in year one at $40K average deal size. Reduces client onboarding cost by 80% through self-service SDK.',
-    dependencies: ['Fan Dashboard 2.0']
-  },
-  {
-    id: 11, title: 'Social Features & Leaderboards',
-    team: 'fan', domain: 'product',
-    startMonth: 7, endMonth: 10, status: 'planned', progress: 0,
-    why: 'Community and competition drive retention. Leaderboards, friend groups, and prediction contests create stickiness and organic growth through social sharing.',
-    businessCase: 'Projected 30% increase in user retention. Social sharing is expected to drive 20% organic acquisition growth, reducing CAC by $2.50 per user.',
-    dependencies: ['Fan Dashboard 2.0', 'In-Play Widgets SDK']
-  },
-  {
-    id: 22, title: 'Push Notification Engine',
-    team: 'fan', domain: 'infrastructure',
-    startMonth: 1, endMonth: 4, status: 'in-progress', progress: 60,
-    why: 'Current notifications are batch-sent and generic. A real-time engine with personalization drives engagement by alerting fans about events they actually care about.',
-    businessCase: 'Increases app open rate by 35%. Targeted notifications show 4x higher click-through than generic ones. Expected to reduce churn by 18% in the first quarter.',
-    dependencies: []
-  },
-  {
-    id: 23, title: 'Streaming Integration Layer',
-    team: 'fan', domain: 'product',
-    startMonth: 4, endMonth: 7, status: 'planned', progress: 0,
-    why: 'Fans want to watch and track stats in one place. Integrating with major streaming platforms provides a unified second-screen experience during live events.',
-    businessCase: 'Partnership deals with 3 streaming providers worth $1.8M. Increases average session duration by 40%. Key differentiator against competitor fan platforms.',
-    dependencies: ['Fan Dashboard 2.0']
-  },
-  {
-    id: 24, title: 'Fan Loyalty Program',
-    team: 'fan', domain: 'product',
-    startMonth: 10, endMonth: 12, status: 'planned', progress: 0,
-    why: 'High-value fans have no structured incentive to stay engaged year-round. A points-based loyalty program rewards consistent engagement and creates off-season retention.',
-    businessCase: 'Projected to increase annual retention by 22%. Loyalty members show 3x higher lifetime value. Creates a data flywheel for better personalization.',
-    dependencies: ['Social Features & Leaderboards']
-  }
+  { id: 4, title: 'Fan Dashboard 2.0', team: 'fan', domain: 'product', startDate: '2026-01-01', endDate: '2026-02-28', status: 'completed', progress: 100, why: 'User research showed 68% of fans wanted personalized stats and predictions. The redesigned dashboard delivers a tailored experience based on favorite teams and players.', businessCase: 'Increased daily active users by 42% in beta testing. Expected to drive 25% improvement in session duration and 18% increase in premium conversions.', dependencies: [] },
+  { id: 8, title: 'In-Play Widgets SDK', team: 'fan', domain: 'product', startDate: '2026-04-01', endDate: '2026-07-31', status: 'planned', progress: 0, why: 'Clients want to embed live match visualizations directly in their apps. A drop-in SDK reduces integration time from weeks to hours and ensures consistent quality.', businessCase: 'Targets 50 new client integrations in year one at $40K average deal size. Reduces client onboarding cost by 80% through self-service SDK.', dependencies: ['Fan Dashboard 2.0'] },
+  { id: 11, title: 'Social Features & Leaderboards', team: 'fan', domain: 'product', startDate: '2026-08-01', endDate: '2026-10-31', status: 'planned', progress: 0, why: 'Community and competition drive retention. Leaderboards, friend groups, and prediction contests create stickiness and organic growth through social sharing.', businessCase: 'Projected 30% increase in user retention. Social sharing is expected to drive 20% organic acquisition growth, reducing CAC by $2.50 per user.', dependencies: ['Fan Dashboard 2.0', 'In-Play Widgets SDK'] },
+  { id: 22, title: 'Push Notification Engine', team: 'fan', domain: 'infrastructure', startDate: '2026-02-01', endDate: '2026-04-30', status: 'in-progress', progress: 60, why: 'Current notifications are batch-sent and generic. A real-time engine with personalization drives engagement by alerting fans about events they actually care about.', businessCase: 'Increases app open rate by 35%. Targeted notifications show 4x higher click-through than generic ones. Expected to reduce churn by 18% in the first quarter.', dependencies: [] },
+  { id: 23, title: 'Streaming Integration Layer', team: 'fan', domain: 'product', startDate: '2026-05-01', endDate: '2026-07-31', status: 'planned', progress: 0, why: 'Fans want to watch and track stats in one place. Integrating with major streaming platforms provides a unified second-screen experience during live events.', businessCase: 'Partnership deals with 3 streaming providers worth $1.8M. Increases average session duration by 40%. Key differentiator against competitor fan platforms.', dependencies: ['Fan Dashboard 2.0'] },
+  { id: 24, title: 'Fan Loyalty Program', team: 'fan', domain: 'product', startDate: '2026-11-01', endDate: '2026-12-31', status: 'planned', progress: 0, why: 'High-value fans have no structured incentive to stay engaged year-round. A points-based loyalty program rewards consistent engagement and creates off-season retention.', businessCase: 'Projected to increase annual retention by 22%. Loyalty members show 3x higher lifetime value. Creates a data flywheel for better personalization.', dependencies: ['Social Features & Leaderboards'] }
 ];
+
+// ============ LOCALSTORAGE ============
+function loadFromStorage(key, defaults) {
+  const stored = localStorage.getItem(key);
+  if (stored) {
+    try {
+      let data = JSON.parse(stored);
+      // Migrate items from old month-based format to date-based
+      if (key === 'roadmap_items' && Array.isArray(data) && data.length > 0 && 'startMonth' in data[0]) {
+        data = data.map(item => {
+          const sd = new Date(2026, item.startMonth, 1);
+          const ed = new Date(2026, item.endMonth, 0);
+          const migrated = { ...item };
+          migrated.startDate = sd.getFullYear() + '-' + String(sd.getMonth()+1).padStart(2,'0') + '-' + String(sd.getDate()).padStart(2,'0');
+          migrated.endDate = ed.getFullYear() + '-' + String(ed.getMonth()+1).padStart(2,'0') + '-' + String(ed.getDate()).padStart(2,'0');
+          delete migrated.startMonth;
+          delete migrated.endMonth;
+          return migrated;
+        });
+        localStorage.setItem(key, JSON.stringify(data));
+      }
+      return data;
+    } catch(e) { /* fall through */ }
+  }
+  localStorage.setItem(key, JSON.stringify(defaults));
+  return JSON.parse(JSON.stringify(defaults));
+}
+
+const TEAMS = loadFromStorage('roadmap_teams', DEFAULT_TEAMS);
+const DOMAINS = loadFromStorage('roadmap_domains', DEFAULT_DOMAINS);
+const ITEMS = loadFromStorage('roadmap_items', DEFAULT_ITEMS);
+
+// ============ DATE HELPERS ============
+function dateToPixel(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const month = d.getMonth();
+  const day = d.getDate();
+  const daysInMonth = new Date(d.getFullYear(), month + 1, 0).getDate();
+  return (month + (day - 1) / daysInMonth) * MONTH_WIDTH;
+}
+
+function endDateToPixel(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const month = d.getMonth();
+  const day = d.getDate();
+  const daysInMonth = new Date(d.getFullYear(), month + 1, 0).getDate();
+  return (month + day / daysInMonth) * MONTH_WIDTH;
+}
+
+function formatDateShort(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function dateDiffMonths(startStr, endStr) {
+  const s = new Date(startStr + 'T12:00:00');
+  const e = new Date(endStr + 'T12:00:00');
+  const diff = (e - s) / (1000 * 60 * 60 * 24 * 30.44);
+  return Math.round(diff * 10) / 10;
+}
 
 // ============ STATE ============
 let grouping = 'team';
@@ -892,15 +800,16 @@ function render() {
     let itemsHtml = '';
     const rowAssignments = getRowAssignments(items);
     items.forEach(item => {
-      const left = item.startMonth * MONTH_WIDTH;
-      const width = (item.endMonth - item.startMonth) * MONTH_WIDTH;
+      const left = dateToPixel(item.startDate);
+      const right = endDateToPixel(item.endDate);
+      const width = right - left;
       const row = rowAssignments[item.id];
       const top = 14 + row * ROW_STEP;
       const fullClass = item.progress === 100 ? ' full' : '';
       const pctLabel = item.progress > 0 && item.progress < 100 ? `<span class="item-pct">${item.progress}%</span>` : '';
       itemsHtml += `
         <div class="roadmap-item status-${item.status}"
-             style="position:absolute; left:${left + 6}px; width:${width - 12}px; top:${top}px;"
+             style="position:absolute; left:${left + 6}px; width:${Math.max(width - 12, 20)}px; top:${top}px;"
              onclick="openPanel(${item.id})"
              title="${item.title}">
           <div class="item-progress${fullClass}" style="width:${item.progress}%"></div>
@@ -909,7 +818,9 @@ function render() {
         </div>`;
     });
 
-    const todayX = currentMonth * MONTH_WIDTH + (new Date().getDate() / 31) * MONTH_WIDTH;
+    const now = new Date();
+    const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+    const todayX = dateToPixel(todayStr);
     const todayHtml = `<div class="today-marker" style="left:${todayX}px"></div>`;
 
     lanesHtml += `<div class="swim-lane${gridTintClass}" style="height:${laneHeight}px;${gridTintStyle}">${gridLines}${todayHtml}${itemsHtml}</div>`;
@@ -931,14 +842,14 @@ function getRowCount(items) {
 }
 
 function getRowAssignments(items) {
-  const sorted = [...items].sort((a, b) => a.startMonth - b.startMonth || a.endMonth - b.endMonth);
+  const sorted = [...items].sort((a, b) => a.startDate.localeCompare(b.startDate) || a.endDate.localeCompare(b.endDate));
   const assignments = {};
   const rowEnds = [];
   for (const item of sorted) {
     let placed = false;
     for (let r = 0; r < rowEnds.length; r++) {
-      if (rowEnds[r] <= item.startMonth) {
-        rowEnds[r] = item.endMonth;
+      if (rowEnds[r] <= item.startDate) {
+        rowEnds[r] = item.endDate;
         assignments[item.id] = r;
         placed = true;
         break;
@@ -946,7 +857,7 @@ function getRowAssignments(items) {
     }
     if (!placed) {
       assignments[item.id] = rowEnds.length;
-      rowEnds.push(item.endMonth);
+      rowEnds.push(item.endDate);
     }
   }
   return assignments;
@@ -964,18 +875,16 @@ function openPanel(id) {
   const item = ITEMS.find(i => i.id === id);
   if (!item) return;
 
-  const team = TEAMS[item.team];
-  const domain = DOMAINS[item.domain];
-  const fmt = d => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-  const startDate = new Date(YEAR, item.startMonth, 1);
-  const endDate = new Date(YEAR, item.endMonth, 0);
+  const team = TEAMS[item.team] || { name: item.team, color: '#888' };
+  const domain = DOMAINS[item.domain] || { name: item.domain, color: '#888' };
+  const duration = dateDiffMonths(item.startDate, item.endDate);
 
   document.getElementById('panelBadge').innerHTML = `<span class="panel-status-badge status-${item.status}">${item.status.replace('-', ' ')}</span>`;
   document.getElementById('panelTitle').textContent = item.title;
   document.getElementById('panelTimeline').innerHTML = `
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    ${fmt(startDate)} &mdash; ${fmt(endDate)}
-    <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">${item.endMonth - item.startMonth} months</span>`;
+    ${formatDateShort(item.startDate)} &mdash; ${formatDateShort(item.endDate)}
+    <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">${duration} months</span>`;
 
   const statusColor = item.status === 'completed' ? 'var(--green)' : item.status === 'in-progress' ? 'var(--accent)' : item.status === 'at-risk' ? 'var(--amber)' : 'var(--blue-muted)';
   document.getElementById('panelProgress').innerHTML = `
@@ -1132,18 +1041,20 @@ function exportToPptx() {
 
     items.forEach(item => {
       const row = rowAssignments[item.id];
-      const bx = chartLeft + item.startMonth * monthW;
-      const bw = (item.endMonth - item.startMonth) * monthW;
+      const startFrac = dateToPixel(item.startDate) / MONTH_WIDTH;
+      const endFrac = endDateToPixel(item.endDate) / MONTH_WIDTH;
+      const bx = chartLeft + startFrac * monthW;
+      const bw = (endFrac - startFrac) * monthW;
       const by = yPos + row * rowStep;
 
       slide1.addShape(pptx.ShapeType.roundRect, {
-        x: bx + 0.02, y: by, w: bw - 0.04, h: barH,
+        x: bx + 0.02, y: by, w: Math.max(bw - 0.04, 0.2), h: barH,
         rectRadius: 0.05,
         fill: { color: STATUS_COLORS[item.status] }
       });
 
       slide1.addText(item.title, {
-        x: bx + 0.1, y: by, w: bw - 0.2, h: barH,
+        x: bx + 0.1, y: by, w: Math.max(bw - 0.2, 0.1), h: barH,
         fontSize: 8, fontFace: 'Segoe UI', color: 'ffffff',
         bold: true, valign: 'middle', shrinkText: true
       });
@@ -1177,8 +1088,8 @@ function exportToPptx() {
       const row = Math.floor(idx / cols);
       const cx = 0.5 + col * (cardW + 0.15);
       const cy = 1.0 + row * 3.2;
-      const team = TEAMS[item.team];
-      const domain = DOMAINS[item.domain];
+      const team = TEAMS[item.team] || { name: item.team, color: '#888' };
+      const domain = DOMAINS[item.domain] || { name: item.domain, color: '#888' };
 
       // Card bg
       slide.addShape(pptx.ShapeType.roundRect, {
@@ -1201,9 +1112,9 @@ function exportToPptx() {
       });
 
       // Status + timeline
-      const startLabel = MONTHS[item.startMonth].name;
-      const endLabel = MONTHS[Math.min(item.endMonth - 1, 11)].name;
-      slide.addText(`${item.status.replace('-', ' ').toUpperCase()}  ·  ${startLabel} — ${endLabel} ${YEAR}`, {
+      const startLabel = formatDateShort(item.startDate);
+      const endLabel = formatDateShort(item.endDate);
+      slide.addText(`${item.status.replace('-', ' ').toUpperCase()}  ·  ${startLabel} — ${endLabel}`, {
         x: cx + 0.15, y: cy + 0.48, w: cardW - 0.3, h: 0.22,
         fontSize: 8, fontFace: 'Segoe UI', color: STATUS_COLORS[item.status]
       });
