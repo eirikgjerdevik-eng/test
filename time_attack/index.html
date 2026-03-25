@@ -1,1 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Time Attack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  :root {
+    --bg: #faf8f4;
+    --surface: #fff;
+    --text: #2c2825;
+    --text-muted: #9a928a;
+    --border: #e8e2da;
+    --border-hover: #c4b9ab;
+    --accent: #c47d2e;
+    --accent-light: #fdf3e7;
+    --correct: #5a8a5e;
+    --correct-bg: #edf5ee;
+    --correct-border: #9ec4a0;
+    --wrong: #c4533a;
+    --blank: #f0ece6;
+    --blank-border: #e0dbd3;
+    --rank-track: #e8e2da;
+    --focus-bg: #fdf8f0;
+    --timer-warn: #e8a33c;
+    --timer-danger: #c4533a;
+  }
+
+  body {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow-x: hidden;
+  }
+
+  /* --- Top bar --- */
+  .top-bar {
+    width: 100%;
+    max-width: 540px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 16px 16px 0;
+    gap: 4px;
+  }
+
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: background 0.15s, color 0.15s;
+    position: relative;
+  }
+
+  .icon-btn:hover { background: var(--border); color: var(--text); }
+  .icon-btn svg { width: 22px; height: 22px; stroke-width: 1.8; }
+
+  /* --- Seed popover --- */
+  .seed-popover {
+    display: none;
+    position: absolute;
+    top: 46px;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 8px 24px rgba(44,40,37,0.1);
+    z-index: 50;
+    flex-direction: row;
+    gap: 6px;
+    min-width: 220px;
+  }
+
+  .seed-popover.open { display: flex; }
+
+  .seed-popover input {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+  }
+
+  .seed-popover input:focus { border-color: var(--accent); }
+
+  .seed-popover button {
+    padding: 7px 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* --- Help modal --- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(44,40,37,0.35);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 28px 24px 24px;
+    max-width: 400px;
+    width: calc(100% - 32px);
+    box-shadow: 0 16px 48px rgba(44,40,37,0.18);
+    position: relative;
+  }
+
+  .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+  .modal p { font-size: 14px; line-height: 1.65; color: #6b635a; margin-bottom: 8px; }
+
+  .modal-close {
+    position: absolute; top: 12px; right: 12px;
+    width: 32px; height: 32px; border: none; background: transparent;
+    border-radius: 8px; cursor: pointer; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .modal-close:hover { background: var(--blank); }
+
+  .time-bonus { font-family: 'DM Mono', monospace; color: var(--accent); }
+
+  /* --- Timer --- */
+  .timer-bar {
+    width: 100%;
+    max-width: 540px;
+    padding: 12px 16px 0;
+  }
+
+  .timer-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .timer-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -1px;
+    transition: color 0.3s;
+  }
+
+  .timer-time.warn { color: var(--timer-warn); }
+  .timer-time.danger { color: var(--timer-danger); }
+
+  .timer-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .timer-track {
+    position: relative;
+    height: 5px;
+    background: var(--rank-track);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .timer-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.3s ease, background 0.3s;
+    min-width: 2px;
+  }
+
+  .timer-fill.warn { background: var(--timer-warn); }
+  .timer-fill.danger { background: var(--timer-danger); }
+
+  .timer-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.3px;
+  }
+
+  /* --- Word input display --- */
+  .word-display {
+    width: 100%;
+    max-width: 540px;
+    padding: 16px 16px 8px;
+    text-align: center;
+  }
+
+  .word-current {
+    font-family: 'DM Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--text);
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .word-current .char {
+    display: inline-block;
+    transition: transform 0.1s;
+  }
+
+  .word-current .char.center {
+    color: var(--accent);
+  }
+
+  .word-current .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 28px;
+    background: var(--accent);
+    animation: blink 1s step-end infinite;
+    margin-left: 1px;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .time-popup {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--correct);
+    opacity: 0;
+    transform: translateY(0);
+    transition: opacity 0.3s, transform 0.5s;
+    pointer-events: none;
+    height: 24px;
+  }
+
+  .time-popup.show {
+    opacity: 1;
+    transform: translateY(-8px);
+  }
+
+  /* --- Hex layout --- */
+  .hex-container {
+    width: 100%;
+    max-width: 540px;
+    display: flex;
+    justify-content: center;
+    padding: 8px 16px 16px;
+  }
+
+  .hex-grid {
+    position: relative;
+    width: 210px;
+    height: 240px;
+  }
+
+  .hex-btn {
+    position: absolute;
+    width: 68px;
+    height: 68px;
+    border-radius: 16px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text);
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.15s, box-shadow 0.15s, background 0.1s;
+    box-shadow: 0 1px 3px rgba(44,40,37,0.06);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .hex-btn:hover {
+    border-color: var(--accent);
+    box-shadow: 0 3px 10px rgba(196,125,46,0.15);
+  }
+
+  .hex-btn:active {
+    transform: scale(0.93);
+    background: var(--accent-light);
+  }
+
+  .hex-btn.center-letter {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 3px 12px rgba(196,125,46,0.3);
+  }
+
+  .hex-btn.center-letter:hover {
+    box-shadow: 0 4px 16px rgba(196,125,46,0.4);
+  }
+
+  .hex-btn.center-letter:active {
+    background: #b3701f;
+  }
+
+  /* Position hex cells: center + 6 around it */
+  .hex-btn.pos-center { left: 71px; top: 86px; }
+  .hex-btn.pos-0 { left: 71px; top: 6px; }
+  .hex-btn.pos-1 { left: 140px; top: 46px; }
+  .hex-btn.pos-2 { left: 140px; top: 126px; }
+  .hex-btn.pos-3 { left: 71px; top: 166px; }
+  .hex-btn.pos-4 { left: 2px; top: 126px; }
+  .hex-btn.pos-5 { left: 2px; top: 46px; }
+
+  /* --- Action buttons row --- */
+  .action-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding: 0 16px 16px;
+  }
+
+  .action-btn {
+    height: 44px;
+    padding: 0 20px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .action-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .action-btn:active {
+    background: var(--accent-light);
+  }
+
+  .action-btn.submit {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .action-btn.submit:hover {
+    opacity: 0.9;
+  }
+
+  /* --- Found words --- */
+  .found-words {
+    width: 100%;
+    max-width: 540px;
+    padding: 0 16px 32px;
+  }
+
+  .found-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .found-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .found-word {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    background: var(--correct-bg);
+    color: var(--correct);
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Start / Game Over overlay --- */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(44,40,37,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+
+  .overlay.open { display: flex; }
+
+  .overlay-card {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 36px 28px;
+    max-width: 360px;
+    width: calc(100% - 32px);
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(44,40,37,0.2);
+  }
+
+  .overlay-card h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .overlay-card .subtitle {
+    font-size: 14px;
+    color: #6b635a;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .overlay-card .final-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .overlay-card .final-words {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+
+  .overlay-btn {
+    display: inline-block;
+    padding: 12px 32px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .overlay-btn:hover { opacity: 0.9; }
+
+  /* --- Toast --- */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+    z-index: 300;
+    pointer-events: none;
+    box-shadow: 0 4px 16px rgba(44,40,37,0.2);
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* --- Shake animation --- */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  .word-current.shake {
+    animation: shake 0.35s ease;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div style="position: relative;">
+    <button class="icon-btn" id="seedBtn" title="Set puzzle seed">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M15 9h.01"/><path d="M17.8 6.2 19 5"/><path d="m3 21 9-9"/><path d="M12.2 6.2 11 5"/></svg>
+    </button>
+    <div class="seed-popover" id="seedPopover">
+      <input type="text" id="seedInput" placeholder="Enter seed..." maxlength="20">
+      <button id="goSeedBtn">Go</button>
+    </div>
+  </div>
+  <button class="icon-btn" id="newPuzzleBtn" title="New random puzzle">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect width="12" height="12" x="2" y="10" rx="2" ry="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/><path d="M6 18h.01"/><path d="M10 14h.01"/><path d="M15 6h.01"/><path d="M18 9h.01"/></svg>
+  </button>
+  <button class="icon-btn" id="helpBtn" title="How to play">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+  </button>
+</div>
+
+<!-- Help modal -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal">
+    <button class="modal-close" id="helpClose">&times;</button>
+    <h2>How to play</h2>
+    <p>
+      Make words using the 7 letters. Every word must <strong>include the center letter</strong>
+      (highlighted in gold). Letters can be reused.
+    </p>
+    <p>
+      You start with <strong>60 seconds</strong>. Each valid word adds time:
+    </p>
+    <p>
+      <span class="time-bonus">4 letters &rarr; +5s</span><br>
+      <span class="time-bonus">5 letters &rarr; +8s</span><br>
+      <span class="time-bonus">6 letters &rarr; +10s</span><br>
+      <span class="time-bonus">7+ letters &rarr; +15s</span>
+    </p>
+    <p>Find as many words as you can before time runs out!</p>
+  </div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay open" id="startOverlay">
+  <div class="overlay-card">
+    <h2>Time Attack</h2>
+    <div class="subtitle">Make as many words as you can.<br>Every word buys you more time.</div>
+    <button class="overlay-btn" id="startBtn">Start</button>
+  </div>
+</div>
+
+<!-- Game over overlay -->
+<div class="overlay" id="gameOverOverlay">
+  <div class="overlay-card">
+    <h2>Time's Up!</h2>
+    <div class="final-score" id="finalScore">0</div>
+    <div class="final-words" id="finalWords">0 words found</div>
+    <button class="overlay-btn" id="playAgainBtn">Play Again</button>
+  </div>
+</div>
+
+<div class="timer-bar">
+  <div class="timer-top">
+    <span class="timer-time" id="timerTime">1:00</span>
+    <span class="timer-score" id="timerScore">0 pts</span>
+  </div>
+  <div class="timer-track">
+    <div class="timer-fill" id="timerFill" style="width: 100%"></div>
+  </div>
+  <span class="timer-label" id="timerLabel">Ready</span>
+</div>
+
+<div class="word-display">
+  <div class="time-popup" id="timePopup"></div>
+  <div class="word-current" id="wordCurrent"><span class="cursor"></span></div>
+</div>
+
+<div class="hex-container">
+  <div class="hex-grid" id="hexGrid"></div>
+</div>
+
+<div class="action-row">
+  <button class="action-btn" id="deleteBtn">Delete</button>
+  <button class="action-btn" id="shuffleBtn">Shuffle</button>
+  <button class="action-btn submit" id="submitBtn">Enter</button>
+</div>
+
+<div class="found-words">
+  <div class="found-header" id="foundHeader">Words found: 0</div>
+  <div class="found-list" id="foundList"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="words_ta.js"></script>
+<script>
+  // --- Utilities ---
+  function mulberry32(seed) {
+    return function() {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function strToSeed(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+      h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+    }
+    return h;
+  }
+
+  let toastTimeout;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => toast.classList.remove('show'), 1500);
+  }
+
+  // --- Game state ---
+  const START_TIME = 60;
+  const MAX_TIME = 180;
+  const TIME_BONUSES = { 4: 5, 5: 8, 6: 10 }; // 7+ = 15
+  let letters = [];
+  let centerLetter = '';
+  let letterSet = null;
+  let currentWord = '';
+  let foundWords = [];
+  let score = 0;
+  let timeLeft = START_TIME;
+  let maxTimeReached = START_TIME;
+  let timerInterval = null;
+  let gameActive = false;
+  let outerLetters = [];
+
+  // --- Timer ---
+  function formatTime(secs) {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  function updateTimerDisplay() {
+    const el = document.getElementById('timerTime');
+    el.textContent = formatTime(Math.ceil(timeLeft));
+    const pct = Math.min(100, (timeLeft / MAX_TIME) * 100);
+    const fill = document.getElementById('timerFill');
+    fill.style.width = pct + '%';
+
+    el.classList.remove('warn', 'danger');
+    fill.classList.remove('warn', 'danger');
+    if (timeLeft <= 10) {
+      el.classList.add('danger');
+      fill.classList.add('danger');
+    } else if (timeLeft <= 20) {
+      el.classList.add('warn');
+      fill.classList.add('warn');
+    }
+
+    document.getElementById('timerScore').textContent = score + ' pts';
+  }
+
+  function startTimer() {
+    gameActive = true;
+    document.getElementById('timerLabel').textContent = 'Go!';
+    timerInterval = setInterval(() => {
+      timeLeft = Math.max(0, timeLeft - 0.1);
+      updateTimerDisplay();
+      if (timeLeft <= 0) {
+        endGame();
+      }
+    }, 100);
+  }
+
+  function endGame() {
+    gameActive = false;
+    clearInterval(timerInterval);
+    document.getElementById('timerLabel').textContent = "Time's up!";
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalWords').textContent = foundWords.length + ' word' + (foundWords.length !== 1 ? 's' : '') + ' found';
+    document.getElementById('gameOverOverlay').classList.add('open');
+  }
+
+  // --- Word display ---
+  function renderWord() {
+    const el = document.getElementById('wordCurrent');
+    let html = '';
+    for (let i = 0; i < currentWord.length; i++) {
+      const ch = currentWord[i];
+      const isCenterChar = (ch === centerLetter);
+      html += `<span class="char${isCenterChar ? ' center' : ''}">${ch.toUpperCase()}</span>`;
+    }
+    if (gameActive) html += '<span class="cursor"></span>';
+    el.innerHTML = html;
+  }
+
+  function shakeWord() {
+    const el = document.getElementById('wordCurrent');
+    el.classList.remove('shake');
+    void el.offsetWidth;
+    el.classList.add('shake');
+  }
+
+  function showTimeBonus(seconds) {
+    const el = document.getElementById('timePopup');
+    el.textContent = '+' + seconds + 's';
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 800);
+  }
+
+  // --- Input ---
+  function typeLetter(ch) {
+    if (!gameActive) return;
+    if (currentWord.length >= 14) return;
+    if (!letterSet.has(ch)) return;
+    currentWord += ch;
+    renderWord();
+  }
+
+  function deleteLetter() {
+    if (!gameActive) return;
+    if (currentWord.length === 0) return;
+    currentWord = currentWord.slice(0, -1);
+    renderWord();
+  }
+
+  function submitWord() {
+    if (!gameActive) return;
+    const word = currentWord.toLowerCase();
+
+    if (word.length < 4) {
+      showToast('Too short');
+      shakeWord();
+      currentWord = '';
+      renderWord();
+      return;
+    }
+
+    if (!word.includes(centerLetter)) {
+      showToast('Must include ' + centerLetter.toUpperCase());
+      shakeWord();
+      currentWord = '';
+      renderWord();
+      return;
+    }
+
+    for (const ch of word) {
+      if (!letterSet.has(ch)) {
+        showToast('Invalid letter');
+        shakeWord();
+        currentWord = '';
+        renderWord();
+        return;
+      }
+    }
+
+    if (!WORD_LIST.has(word)) {
+      showToast('Not in word list');
+      shakeWord();
+      currentWord = '';
+      renderWord();
+      return;
+    }
+
+    if (foundWords.includes(word)) {
+      showToast('Already found');
+      shakeWord();
+      currentWord = '';
+      renderWord();
+      return;
+    }
+
+    // Valid word!
+    foundWords.push(word);
+    const bonus = word.length >= 7 ? 15 : (TIME_BONUSES[word.length] || 15);
+    const points = word.length >= 7 ? word.length * 3 : word.length >= 6 ? word.length * 2 : word.length;
+    score += points;
+    timeLeft = Math.min(MAX_TIME, timeLeft + bonus);
+    if (timeLeft > maxTimeReached) maxTimeReached = timeLeft;
+
+    showTimeBonus(bonus);
+    updateTimerDisplay();
+    currentWord = '';
+    renderWord();
+
+    // Update found words display
+    const list = document.getElementById('foundList');
+    const tag = document.createElement('span');
+    tag.className = 'found-word';
+    tag.textContent = word;
+    list.insertBefore(tag, list.firstChild);
+    document.getElementById('foundHeader').textContent = 'Words found: ' + foundWords.length;
+
+    // Update label based on word count
+    const labels = ['Ready', 'Nice!', 'Good!', 'Great!', 'Amazing!', 'On Fire!', 'Unstoppable!'];
+    const labelIdx = Math.min(labels.length - 1, Math.floor(foundWords.length / 5));
+    document.getElementById('timerLabel').textContent = labels[labelIdx];
+  }
+
+  function shuffleOuterLetters() {
+    for (let i = outerLetters.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [outerLetters[i], outerLetters[j]] = [outerLetters[j], outerLetters[i]];
+    }
+    renderHex();
+  }
+
+  // --- Hex rendering ---
+  function renderHex() {
+    const grid = document.getElementById('hexGrid');
+    grid.innerHTML = '';
+
+    // Center button
+    const centerBtn = document.createElement('div');
+    centerBtn.className = 'hex-btn center-letter pos-center';
+    centerBtn.textContent = centerLetter.toUpperCase();
+    centerBtn.addEventListener('click', () => typeLetter(centerLetter));
+    grid.appendChild(centerBtn);
+
+    // Outer buttons
+    outerLetters.forEach((l, i) => {
+      const btn = document.createElement('div');
+      btn.className = 'hex-btn pos-' + i;
+      btn.textContent = l.toUpperCase();
+      btn.addEventListener('click', () => typeLetter(l));
+      grid.appendChild(btn);
+    });
+  }
+
+  // --- Init puzzle ---
+  function initPuzzle(seedStr) {
+    clearInterval(timerInterval);
+    gameActive = false;
+    currentWord = '';
+    foundWords = [];
+    score = 0;
+    timeLeft = START_TIME;
+    maxTimeReached = START_TIME;
+
+    const rng = mulberry32(strToSeed(seedStr));
+    const puzzleIndex = Math.floor(rng() * PUZZLE_SETS.length);
+    const puzzle = PUZZLE_SETS[puzzleIndex];
+    letters = puzzle.letters;
+    centerLetter = puzzle.center;
+    letterSet = new Set(letters);
+
+    outerLetters = letters.filter(l => l !== centerLetter);
+    // Shuffle outer letters
+    for (let i = outerLetters.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [outerLetters[i], outerLetters[j]] = [outerLetters[j], outerLetters[i]];
+    }
+
+    renderHex();
+    renderWord();
+    updateTimerDisplay();
+    document.getElementById('timerLabel').textContent = 'Ready';
+    document.getElementById('foundList').innerHTML = '';
+    document.getElementById('foundHeader').textContent = 'Words found: 0';
+    document.getElementById('timerFill').style.width = '100%';
+
+    // Show start overlay
+    document.getElementById('startOverlay').classList.add('open');
+    document.getElementById('gameOverOverlay').classList.remove('open');
+  }
+
+  // --- Keyboard support ---
+  document.addEventListener('keydown', function(e) {
+    if (!gameActive) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitWord();
+    } else if (e.key === 'Backspace') {
+      e.preventDefault();
+      deleteLetter();
+    } else if (e.key.length === 1 && /[a-z]/i.test(e.key)) {
+      e.preventDefault();
+      typeLetter(e.key.toLowerCase());
+    }
+  });
+
+  // --- Button handlers ---
+  document.getElementById('deleteBtn').addEventListener('click', deleteLetter);
+  document.getElementById('shuffleBtn').addEventListener('click', shuffleOuterLetters);
+  document.getElementById('submitBtn').addEventListener('click', submitWord);
+
+  document.getElementById('startBtn').addEventListener('click', function() {
+    document.getElementById('startOverlay').classList.remove('open');
+    startTimer();
+    renderWord();
+  });
+
+  document.getElementById('playAgainBtn').addEventListener('click', function() {
+    document.getElementById('gameOverOverlay').classList.remove('open');
+    const seed = 'random-' + Math.random().toString(36).slice(2, 10);
+    initPuzzle(seed);
+  });
+
+  document.getElementById('newPuzzleBtn').addEventListener('click', function() {
+    const seed = 'random-' + Math.random().toString(36).slice(2, 10);
+    document.getElementById('seedInput').value = seed;
+    initPuzzle(seed);
+  });
+
+  const seedPopover = document.getElementById('seedPopover');
+  document.getElementById('seedBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    seedPopover.classList.toggle('open');
+    if (seedPopover.classList.contains('open')) {
+      document.getElementById('seedInput').focus();
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!seedPopover.contains(e.target) && e.target.id !== 'seedBtn') {
+      seedPopover.classList.remove('open');
+    }
+  });
+
+  document.getElementById('goSeedBtn').addEventListener('click', function() {
+    const seed = document.getElementById('seedInput').value.trim();
+    if (seed) { initPuzzle(seed); seedPopover.classList.remove('open'); }
+  });
+
+  document.getElementById('seedInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      const seed = this.value.trim();
+      if (seed) { initPuzzle(seed); seedPopover.classList.remove('open'); }
+    }
+  });
+
+  document.getElementById('helpBtn').addEventListener('click', function() {
+    document.getElementById('helpModal').classList.add('open');
+  });
+
+  document.getElementById('helpClose').addEventListener('click', function() {
+    document.getElementById('helpModal').classList.remove('open');
+  });
+
+  document.getElementById('helpModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+
+  // --- Start with today's date ---
+  const today = new Date();
+  const dateStr = today.toISOString().slice(0, 10);
+  initPuzzle(dateStr);
+</script>
+</body>
+</html>
