@@ -231,7 +231,7 @@
     color: var(--text-muted);
   }
 
-  /* --- Letter tiles --- */
+  /* --- Letter keyboard --- */
   .letters-display {
     display: flex;
     gap: 8px;
@@ -255,14 +255,33 @@
     font-weight: 700;
     text-transform: uppercase;
     color: var(--text);
-    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    transition: transform 0.1s, border-color 0.15s, box-shadow 0.15s, background 0.1s;
     box-shadow: 0 1px 3px rgba(44,40,37,0.06);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .letter-hex:hover {
-    transform: scale(1.08);
     border-color: var(--accent);
     box-shadow: 0 3px 10px rgba(196,125,46,0.15);
+  }
+
+  .letter-hex:active {
+    transform: scale(0.93);
+    background: var(--accent-light);
+  }
+
+  .letter-hex.key-backspace {
+    width: 50px;
+    font-size: 18px;
+    color: var(--text-muted);
+  }
+
+  .letter-hex.key-backspace:active {
+    background: #fde8e4;
+    border-color: var(--wrong);
   }
 
   /* --- Grid --- */
@@ -329,7 +348,8 @@
     transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
   }
 
-  .cell input:focus {
+  .cell input:focus,
+  .cell input.active {
     border-color: var(--accent);
     background: var(--focus-bg);
     box-shadow: 0 0 0 3px rgba(196,125,46,0.1);
@@ -516,6 +536,29 @@
   let cellInputs = [];
   let saved = {};
   let stateKey = '';
+  let activeInput = null;
+
+  function setActiveInput(input) {
+    if (activeInput && activeInput !== input) {
+      activeInput.classList.remove('active');
+      // Clear cells that only have the first letter (don't persist partial)
+      if (!activeInput.classList.contains('correct')) {
+        const letter = activeInput.dataset.letter;
+        if (activeInput.value.toLowerCase() === letter) {
+          activeInput.value = '';
+        }
+        activeInput.classList.remove('hinted');
+      }
+    }
+    activeInput = input;
+    if (input) {
+      input.classList.add('active');
+      // Auto-fill first letter
+      if (!input.classList.contains('correct') && input.value === '') {
+        input.value = input.dataset.letter;
+      }
+    }
+  }
 
   function updateRank() {
     const total = document.querySelectorAll('.cell input').length;
@@ -528,6 +571,43 @@
     document.getElementById('rankName').textContent = rankName;
     document.getElementById('rankScore').textContent = `${completed} / ${total}`;
     document.getElementById('rankFill').style.width = `${pct * 100}%`;
+  }
+
+  function typeLetter(ch) {
+    if (!activeInput || activeInput.classList.contains('correct')) return;
+    const letter = activeInput.dataset.letter;
+    const len = parseInt(activeInput.dataset.length);
+    let val = activeInput.value.toLowerCase();
+
+    if (val.length >= len) return;
+    if (!letterSet.has(ch)) return;
+
+    // If cell is empty, always start with the row letter
+    if (val.length === 0) {
+      val = letter;
+      if (ch !== letter) val += ch;
+    } else {
+      val += ch;
+    }
+
+    val = val.slice(0, len);
+    activeInput.value = val;
+
+    if (val.length === len) {
+      submitWord(activeInput);
+    }
+  }
+
+  function backspace() {
+    if (!activeInput || activeInput.classList.contains('correct')) return;
+    const letter = activeInput.dataset.letter;
+    let val = activeInput.value.toLowerCase();
+
+    // Don't delete the locked first letter
+    if (val.length <= 1) return;
+
+    activeInput.value = val.slice(0, -1);
+    activeInput.classList.remove('hinted');
   }
 
   function submitWord(input) {
@@ -567,10 +647,11 @@
     updateRank();
     showToast('Nice!');
 
+    // Advance to next empty cell
     const idx = cellInputs.indexOf(input);
     for (let i = idx + 1; i < cellInputs.length; i++) {
       if (!cellInputs[i].classList.contains('correct')) {
-        cellInputs[i].focus();
+        setActiveInput(cellInputs[i]);
         break;
       }
     }
@@ -587,7 +668,7 @@
     showToast(msg);
     setTimeout(() => {
       input.classList.remove('wrong');
-      input.value = input.dataset.letter;
+      input.value = '';
       input.classList.remove('hinted');
     }, 400);
   }
@@ -598,9 +679,13 @@
     const words = wordMap[key];
     if (!words || words.length === 0) return;
 
+    setActiveInput(input);
+
     const hintWord = words[0];
     const currentVal = input.value.toLowerCase();
-    const nextLen = currentVal.length + 1;
+    // If empty, start from 0
+    const currentLen = currentVal.length === 0 ? 0 : currentVal.length;
+    const nextLen = currentLen + 1;
 
     input.value = hintWord.slice(0, nextLen);
     input.classList.add('hinted');
@@ -617,6 +702,7 @@
     const puzzleIndex = Math.floor(rng() * PUZZLE_SETS.length);
     const letters = PUZZLE_SETS[puzzleIndex];
 
+    activeInput = null;
     letterSet = new Set(letters);
     const puzzleWords = [];
     for (const word of WORD_LIST) {
@@ -635,15 +721,29 @@
       wordMap[key].push(w);
     }
 
-    // Render letters
+    // Render letter keyboard
     const lettersDisplay = document.getElementById('lettersDisplay');
     lettersDisplay.innerHTML = '';
     for (const l of letters) {
       const div = document.createElement('div');
       div.className = 'letter-hex';
       div.textContent = l;
+      div.addEventListener('click', function(e) {
+        e.preventDefault();
+        typeLetter(l);
+      });
       lettersDisplay.appendChild(div);
     }
+    // Backspace key
+    const bksp = document.createElement('div');
+    bksp.className = 'letter-hex key-backspace';
+    bksp.innerHTML = '&#9003;';
+    bksp.title = 'Backspace';
+    bksp.addEventListener('click', function(e) {
+      e.preventDefault();
+      backspace();
+    });
+    lettersDisplay.appendChild(bksp);
 
     // Build grid
     const grid = document.getElementById('grid');
@@ -677,6 +777,7 @@
           const input = document.createElement('input');
           input.type = 'text';
           input.maxLength = len;
+          input.readOnly = true;
           input.dataset.letter = letter;
           input.dataset.length = len;
           input.dataset.key = key;
@@ -685,49 +786,36 @@
           input.setAttribute('autocapitalize', 'off');
           input.setAttribute('spellcheck', 'false');
 
-          // Auto-fill first letter on focus
-          input.addEventListener('focus', function() {
-            if (!input.classList.contains('correct') && input.value === '') {
-              input.value = letter;
+          // Tap/click to select this cell
+          input.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!input.classList.contains('correct')) {
+              setActiveInput(input);
             }
           });
 
+          // Still support physical keyboard for desktop
           input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') submitWord(input);
-            // Prevent deleting the locked first letter
-            if ((e.key === 'Backspace' || e.key === 'Delete') && input.value.length <= 1) {
-              e.preventDefault();
-            }
-            // Prevent typing a different first character
-            if (input.value.length === 0 && e.key.length === 1 && e.key.toLowerCase() !== letter) {
-              e.preventDefault();
-            }
-          });
-
-          input.addEventListener('input', function() {
-            let val = input.value.toLowerCase();
-            // Strip any chars that aren't in the letter set
-            val = val.split('').filter(c => letterSet.has(c)).join('');
-            // Ensure first character is always the row letter
-            if (val.length === 0 || val[0] !== letter) {
-              // Remove wrong first char if present, prepend correct one
-              if (val.length > 0 && val[0] !== letter) val = val.slice(1);
-              val = letter + val;
-            }
-            // Enforce max length
-            val = val.slice(0, len);
-            input.value = val;
-            if (val.length === len) {
+            if (input.classList.contains('correct')) return;
+            if (e.key === 'Enter') {
               submitWord(input);
+            } else if (e.key === 'Backspace' || e.key === 'Delete') {
+              e.preventDefault();
+              backspace();
+            } else if (e.key.length === 1) {
+              e.preventDefault();
+              typeLetter(e.key.toLowerCase());
             }
           });
 
+          // Hint button
           const hintBtn = document.createElement('button');
           hintBtn.className = 'hint-btn';
           hintBtn.textContent = '?';
           hintBtn.title = 'Reveal a letter';
           hintBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             giveHint(input);
           });
 
