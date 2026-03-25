@@ -579,8 +579,8 @@
 <!-- Start overlay -->
 <div class="overlay open" id="startOverlay">
   <div class="overlay-card">
-    <h2>Time Attack</h2>
-    <div class="subtitle">Make as many words as you can.<br>Every word buys you more time.</div>
+    <h2 id="startTitle">Time Attack</h2>
+    <div class="subtitle" id="startSubtitle">Make as many words as you can.<br>Every word buys you more time.</div>
     <button class="overlay-btn" id="startBtn">Start</button>
   </div>
 </div>
@@ -593,6 +593,18 @@
     <div class="final-rank" id="finalRank">Beginner</div>
     <div class="final-words" id="finalWords">0 words found</div>
     <button class="overlay-btn" id="playAgainBtn">Play Again</button>
+  </div>
+</div>
+
+<!-- Daily already played overlay -->
+<div class="overlay" id="dailyDoneOverlay">
+  <div class="overlay-card">
+    <h2>Today's Puzzle</h2>
+    <div class="final-score"><span id="dailyScoreNum">0</span><span class="final-pts"> pts</span></div>
+    <div class="final-rank" id="dailyRank">Beginner</div>
+    <div class="final-words" id="dailyWords">0 words found</div>
+    <div class="subtitle" style="margin-top:12px">Come back tomorrow for a new daily puzzle!</div>
+    <button class="overlay-btn" id="dailyNewBtn">Play Random Puzzle</button>
   </div>
 </div>
 
@@ -673,6 +685,28 @@
   let timerInterval = null;
   let gameActive = false;
   let outerLetters = [];
+  let currentSeed = '';
+  let isDaily = false;
+
+  function getDailyDateStr() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function saveDailyState() {
+    if (!isDaily) return;
+    const state = { foundWords, score, completed: true, date: getDailyDateStr() };
+    localStorage.setItem('timeattack-daily', JSON.stringify(state));
+  }
+
+  function loadDailyState() {
+    try {
+      const raw = localStorage.getItem('timeattack-daily');
+      if (!raw) return null;
+      const state = JSON.parse(raw);
+      if (state.date !== getDailyDateStr()) return null; // expired
+      return state;
+    } catch { return null; }
+  }
 
   // --- Rank system ---
   const RANKS = [
@@ -745,6 +779,7 @@
     document.getElementById('finalRank').textContent = getRank(score);
     document.getElementById('finalWords').textContent = foundWords.length + ' word' + (foundWords.length !== 1 ? 's' : '') + ' found';
     document.getElementById('gameOverOverlay').classList.add('open');
+    saveDailyState();
   }
 
   // --- Word display ---
@@ -859,10 +894,7 @@
     list.insertBefore(tag, list.firstChild);
     document.getElementById('foundHeader').textContent = 'Words found: ' + foundWords.length;
 
-    // Update label based on word count
-    const labels = ['Ready', 'Nice!', 'Good!', 'Great!', 'Amazing!', 'On Fire!', 'Unstoppable!'];
-    const labelIdx = Math.min(labels.length - 1, Math.floor(foundWords.length / 5));
-    document.getElementById('timerLabel').textContent = labels[labelIdx];
+    updateRankLabel();
   }
 
   function shuffleOuterLetters() {
@@ -896,7 +928,7 @@
   }
 
   // --- Init puzzle ---
-  function initPuzzle(seedStr) {
+  function initPuzzle(seedStr, forceDaily) {
     clearInterval(timerInterval);
     gameActive = false;
     currentWord = '';
@@ -904,6 +936,8 @@
     score = 0;
     timeLeft = START_TIME;
     maxTimeReached = START_TIME;
+    currentSeed = seedStr;
+    isDaily = (seedStr === getDailyDateStr()) || forceDaily === true;
 
     const rng = mulberry32(strToSeed(seedStr));
     const puzzleIndex = Math.floor(rng() * PUZZLE_SETS.length);
@@ -922,14 +956,58 @@
     renderHex();
     renderWord();
     updateTimerDisplay();
-    document.getElementById('timerLabel').textContent = 'Ready';
+    updateRankLabel();
     document.getElementById('foundList').innerHTML = '';
     document.getElementById('foundHeader').textContent = 'Words found: 0';
     document.getElementById('timerFill').style.width = '100%';
 
-    // Show start overlay
-    document.getElementById('startOverlay').classList.add('open');
+    // Hide all overlays first
+    document.getElementById('startOverlay').classList.remove('open');
     document.getElementById('gameOverOverlay').classList.remove('open');
+    document.getElementById('dailyDoneOverlay').classList.remove('open');
+
+    // Check if daily puzzle was already completed
+    if (isDaily) {
+      const saved = loadDailyState();
+      if (saved && saved.completed) {
+        // Restore the completed state
+        foundWords = saved.foundWords;
+        score = saved.score;
+        timeLeft = 0;
+        updateTimerDisplay();
+        updateRankLabel();
+
+        // Show found words
+        const list = document.getElementById('foundList');
+        list.innerHTML = '';
+        for (const w of [...foundWords].reverse()) {
+          const tag = document.createElement('span');
+          tag.className = 'found-word';
+          tag.textContent = w;
+          list.appendChild(tag);
+        }
+        document.getElementById('foundHeader').textContent = 'Words found: ' + foundWords.length;
+        document.getElementById('timerTime').textContent = '0:00';
+        document.getElementById('timerFill').style.width = '0%';
+
+        // Show the daily-done overlay
+        document.getElementById('dailyScoreNum').textContent = score;
+        document.getElementById('dailyRank').textContent = getRank(score);
+        document.getElementById('dailyWords').textContent = foundWords.length + ' word' + (foundWords.length !== 1 ? 's' : '') + ' found';
+        document.getElementById('dailyDoneOverlay').classList.add('open');
+        return;
+      }
+    }
+
+    // Show start overlay for fresh games
+    if (isDaily) {
+      document.getElementById('startTitle').textContent = 'Daily Puzzle';
+      document.getElementById('startSubtitle').innerHTML = 'Make as many words as you can.<br>Every word buys you more time.';
+    } else {
+      document.getElementById('startTitle').textContent = 'Time Attack';
+      document.getElementById('startSubtitle').innerHTML = 'Make as many words as you can.<br>Every word buys you more time.';
+    }
+    document.getElementById('startOverlay').classList.add('open');
   }
 
   // --- Keyboard support ---
@@ -960,6 +1038,12 @@
 
   document.getElementById('playAgainBtn').addEventListener('click', function() {
     document.getElementById('gameOverOverlay').classList.remove('open');
+    const seed = 'random-' + Math.random().toString(36).slice(2, 10);
+    initPuzzle(seed);
+  });
+
+  document.getElementById('dailyNewBtn').addEventListener('click', function() {
+    document.getElementById('dailyDoneOverlay').classList.remove('open');
     const seed = 'random-' + Math.random().toString(36).slice(2, 10);
     initPuzzle(seed);
   });
